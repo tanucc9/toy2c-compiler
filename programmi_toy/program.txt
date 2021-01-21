@@ -1,0 +1,42 @@
+float primo := 0;
+float secondo := 0;
+int operazione :=0;
+
+proc showmenu() void:
+    write("Inserisci l'operazione aritmetica da svolgere\n");
+    write("Per l'addizione digita 1");
+    write("Per la sottrazione digita 2");
+    write("Per la moltiplicazione digita 3");
+    write("Per la divisione digita 4");
+    read(operazione);
+    ->
+corp;
+
+proc getValues() void:
+    write("Inserisci primo valore\n");
+    read(primo);
+    write("Inserisci secondo valore\n");
+    read(secondo);
+    ->
+corp;
+
+proc getResult() float:
+    float result:=0;
+    if operazione = 1 then result := primo + secondo;
+    elif operazione = 2 then result := primo - secondo;
+    elif operazione = 3 then result := primo * secondo;
+    else result := primo / secondo;
+    fi;
+        -> result
+corp;
+
+proc main() void:
+float result := 0;
+    showmenu();
+    getValues();
+    result := getResult();
+    write("Il risultato è: ", result);
+    ->
+corp;
+
+
