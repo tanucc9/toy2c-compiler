@@ -4,6 +4,7 @@ public class ProcBodyOP {
     private ArrayList<VarDeclOP> vdList;
     private BodyOP sList;
     private ArrayList<Expr> re;
+    private RowTable rt;
 
     public ProcBodyOP(ArrayList<VarDeclOP> vdList, BodyOP sList,ArrayList<Expr> re){
         this.vdList= vdList;

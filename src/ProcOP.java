@@ -9,6 +9,7 @@ public class ProcOP {
     ArrayList<String> rtList;
     //colon
     ProcBodyOP procBodyOP;
+    private RowTable rt;
 
 
     public ProcOP(Id id, ArrayList<ParDeclOP> pdList, ArrayList<String> rtList , ProcBodyOP procBodyOP ) {

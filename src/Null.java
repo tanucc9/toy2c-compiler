@@ -1,5 +1,7 @@
 public class Null extends Expr {
     private String n;
+    private RowTable rt;
+
     public Null(){
         this.n="null";
     }

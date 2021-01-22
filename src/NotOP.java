@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class NotOP extends Expr {
     private Expr ne;
+    private RowTable rt;
 
     public NotOP(Expr expr){
         this.ne=expr;

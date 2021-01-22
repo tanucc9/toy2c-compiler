@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class BodyOP {
     private ArrayList<Stat> statList;
+    private RowTable rt;
 
     public BodyOP (ArrayList<Stat> statList) {
         this.statList=statList;

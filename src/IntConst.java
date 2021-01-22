@@ -1,5 +1,7 @@
 public class IntConst extends Expr {
     private int val;
+    private RowTable rt;
+
 
     public IntConst(int x){
         this.val=x;

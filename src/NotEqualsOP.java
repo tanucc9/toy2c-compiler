@@ -1,5 +1,7 @@
 public class NotEqualsOP extends Expr {
     private Expr e, e1;
+    private RowTable rt;
+
     public NotEqualsOP(Expr e, Expr e1){
         this.e=e;
         this.e1=e1;

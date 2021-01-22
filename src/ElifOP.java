@@ -3,6 +3,7 @@ import java.util.ArrayList;
 public class ElifOP {
     private Expr e;
     private BodyOP sList;
+    private RowTable rt;
 
     public ElifOP(Expr e, BodyOP sList) {
         this.e=e;

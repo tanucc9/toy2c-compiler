@@ -1,6 +1,7 @@
 public class AssignSingle {
     Id id;
     Expr e;
+    private RowTable rt;
 
     public AssignSingle(Id id, Expr e) {
         this.id = id;

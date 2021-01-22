@@ -1,5 +1,7 @@
 public class Stat {
     private CallProcOP cp;
+    private RowTable rt;
+
     public Stat(CallProcOP cp) {
         this.cp=cp;
     }

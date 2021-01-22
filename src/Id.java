@@ -1,6 +1,8 @@
 public class Id extends Expr{
 
     private String id;
+    private RowTable rt;
+
 
     public Id(String id){
         this.id=id;

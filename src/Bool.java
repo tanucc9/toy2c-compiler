@@ -1,5 +1,6 @@
 public class Bool extends Expr {
     private boolean b;
+    private RowTable rt;
 
     public Bool(boolean b){
         this.b=b;

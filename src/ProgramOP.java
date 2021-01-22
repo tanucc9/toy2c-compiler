@@ -3,6 +3,8 @@ import java.util.ArrayList;
 public class ProgramOP {
     private ArrayList<VarDeclOP> VarDeclList ;
     private ArrayList<ProcOP> ProcList;
+    private RowTable rt;
+
 
     ProgramOP(ArrayList<VarDeclOP> VarDeclListOP ,ArrayList<ProcOP> ProcListOP){
         this.ProcList= ProcListOP;

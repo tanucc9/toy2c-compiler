@@ -3,6 +3,8 @@ import java.util.ArrayList;
 public class ParDeclOP {
     String type;
     ArrayList<Id> IdList;
+    private RowTable rt;
+
 
     public ParDeclOP(String type, ArrayList<Id> idList) {
         this.type = type;

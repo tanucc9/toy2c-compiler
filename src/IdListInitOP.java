@@ -7,6 +7,15 @@ public class IdListInitOP {
     //assign
     //ArrayList<String> idList;
     private Expr expr;
+    private RowTable rt = new RowTable();
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
+    }
 
     public IdListInitOP(Id id, Expr expr) {
         this.id = id;

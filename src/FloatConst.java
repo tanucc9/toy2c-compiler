@@ -1,5 +1,6 @@
 public class FloatConst extends Expr{
     private float f;
+    private RowTable rt;
 
     public FloatConst(float f){
         this.f=f;

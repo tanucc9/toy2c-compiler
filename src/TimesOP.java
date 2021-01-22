@@ -1,6 +1,8 @@
 public class TimesOP extends Expr {
 
     private Expr e, e1;
+    private RowTable rt;
+
     public TimesOP(Expr e, Expr e1){
         this.e=e;
         this.e1=e1;

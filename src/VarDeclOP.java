@@ -4,6 +4,15 @@ public class VarDeclOP {
     String type;
     //ArrayList<IdInitOP> IdListInit;
     ArrayList<IdListInitOP> IdListInit;
+    private RowTable rt = new RowTable();
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
+    }
 
     public VarDeclOP(String type, ArrayList<IdListInitOP> idListInit) {
         this.type = type;

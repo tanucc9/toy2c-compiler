@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class ReadOP extends Stat{
     private ArrayList<Id> idList;
+    private RowTable rt;
 
     public ReadOP() {
         super();

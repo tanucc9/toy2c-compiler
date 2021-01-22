@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class WriteOP extends Stat{
     private ArrayList<Expr> exprList;
+    private RowTable rt;
 
     public WriteOP(ArrayList<Expr> exprList) {
         super();

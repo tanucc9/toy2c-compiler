@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 public class ElseOP {
     private BodyOP sList;
+    private RowTable rt;
 
     public ElseOP(BodyOP sList) {
         this.sList=sList;

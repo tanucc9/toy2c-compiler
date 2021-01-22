@@ -1,7 +1,16 @@
 public class Expr {
 
-
+    private RowTable rt = new RowTable();
    private CallProcOP cp;
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
+    }
+
     public Expr(){}
 
 

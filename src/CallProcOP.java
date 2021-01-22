@@ -3,6 +3,7 @@ import java.util.ArrayList;
 public class CallProcOP {
     private String val;
     private ArrayList<Expr> elist;
+    private RowTable rt;
 
     public CallProcOP(String val, ArrayList<Expr> elist) {
         this.val=val;

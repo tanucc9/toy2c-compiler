@@ -1,5 +1,6 @@
 public class StringConst extends Expr{
     private String s;
+    private RowTable rt;
 
     public StringConst(String s){
         this.s=s;
