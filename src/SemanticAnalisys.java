@@ -23,9 +23,12 @@ public class SemanticAnalisys implements Visitor{
     public void enterScope(ArrayList<RowTable> table){
         this.typeEnvironment.add(table);
         }
-    public ArrayList<RowTable> lookup(RowTable rt){
+
+    public ArrayList<RowTable> lookup(String symbol, String kind){
         for(ArrayList<RowTable> table : this.typeEnvironment){
-            if(table.contains(rt)) return table;
+            for(RowTable rowt : table){
+                if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return table;
+            }
         }
         return null;
     }
@@ -38,10 +41,10 @@ public class SemanticAnalisys implements Visitor{
             }
         });
     }
-    public boolean probe(String symbol){
+    public boolean probe(String symbol, String kind){
         for(ArrayList<RowTable> table : this.typeEnvironment){
               for(RowTable rowt : table){
-                  if(rowt.getSymbol().equals(symbol)) return true;
+                  if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return true;
               }
             }
         throw new Error("La variabile " + symbol +" non è stata dichiarate");
@@ -79,7 +82,7 @@ public class SemanticAnalisys implements Visitor{
     public Object visit(AssignOP a) {
         for(Id id : a.getIlist()) {
             String s= (String) id.accept(this);
-            this.probe(s);
+            this.probe(s, "var");
         }
         for(Expr e : a.getElist()) {
             Object o = e.accept(this);
@@ -101,21 +104,45 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(CallProcOP cp) {
-        Element callProcOP =document.createElement("CallProcOP");
-        callProcOP.appendChild(document.createTextNode("(ID,\""+cp.getVal()+"\")"));
+        ArrayList<RowTable> tableCp = this.lookup(cp.getVal(), "method");
+        if(tableCp !=null) {
+            for(RowTable row : tableCp) {
+                if(row.getSymbol().equals(cp.getVal()) && row.getKind().equals("method")) cp.setRt(row);
+            }
+        } else throw new Error ("Il proc"+ cp.getVal() +" non è stato dichiarato.");
 
         if(cp.getElist() != null ) {
-            Element exprOPList= document.createElement("ExprOPList");
+            ArrayList<String> parType= new ArrayList<String>();
             for(Expr e : cp.getElist()) {
-                Element exprOP= document.createElement("ExprOP");
-                Object o = e.accept(this);
-                if(o instanceof String){exprOP.appendChild(document.createTextNode(o.toString()));}
-                if(o instanceof Element){exprOP.appendChild((Element) o);}
-                exprOPList.appendChild(exprOP);
+                RowTable rt = (RowTable) e.accept(this);
+                if(rt.getKind().equals("method")) {
+                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
+                    if(table !=null) {
+                        for(RowTable row : table) {
+                            if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
+                        }
+                        String[] resType = e.getRt().getType().split("->")[1].split(",");
+                        for(String type : resType) {
+                            parType.add(type);
+                        }
+                    } else throw new Error ("Il proc"+ e.getCp().getVal() +" non è stato dichiarato.");
+                } else {
+                    parType.add(rt.getType());
+                }
             }
-            callProcOP.appendChild(exprOPList);
+
+            String[] parTypeCp = cp.getRt().getType().split("->")[0].split(",");
+
+            ArrayList<String> parTypeCpList = new ArrayList<String>();
+            for (String s : parTypeCp) {
+                parTypeCpList.add(s);
+            }
+
+            if(parType.size() != parTypeCpList.size()) throw new Error("Il numero dei parametri passati al proc"+ cp.getVal() +" non corrisponde al numero dei parametri attesi.");
+            if (!parType.equals(parTypeCpList)) throw new Error(" I tipi dei parametri passati al proc"+ cp.getVal() +" non corrispondono a quelli attesi. ");
+
         }
-        return callProcOP;
+        return cp.getRt();
     }
 
     @Override
@@ -197,7 +224,7 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(Id id) {
-        return "(ID, \""+id.getId()+"\")";
+        return id.getId();
     }
 
     @Override
@@ -380,20 +407,19 @@ public class SemanticAnalisys implements Visitor{
                 //parDecl.getRt().setType(parDecl.getType());
             }
         }
-        ArrayList<String> resTypeOP= new ArrayList<String>();
 
+        String resType = "->";
         for (String s: p.getRtList()) {
-            resTypeOP.add(s);
+            resType.concat(s+",");
         }
-        ArrayList<String> parListType= new ArrayList<String>();
+        String parListType= "";
         parDeclOP.forEach(rowTable -> {
-            parListType.add(rowTable.getType().toString());
-
+            parListType.concat(rowTable.getSymbol()+",");
         });
-        ArrayList<ArrayList<String>> listType= new ArrayList<ArrayList<String>>();
-        listType.add(parListType);
-        listType.add(resTypeOP);
-        p.getRowT().setType(listType);
+
+        parListType.concat(resType);
+
+        p.getRowT().setType(parListType);
         p.getRowT().setKind("method");
         p.getRowT().setSymbol(idProc);
 
@@ -411,7 +437,7 @@ public class SemanticAnalisys implements Visitor{
     public Object visit(ReadOP c) {
         for(Id i:c.getIdList()){
             String s= i.accept(this).toString();
-            this.probe(s);
+            this.probe(s, "var");
         }
         return true;
     }
@@ -511,26 +537,32 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(StringConst sc) {
-        return "(STRING_CONST, \""+ sc.getS() +"\")";
+        sc.getRt().setType("string");
+        return sc.getRt();
     }
 
     @Override
     public Object visit(IntConst ic) {
-        return "(INT_CONST, \""+ ic.getVal() +"\")";
+        ic.getRt().setType("int");
+        return ic.getRt();
     }
 
     @Override
     public Object visit(Bool b) {
-        return "("+ b.isB()+")";
+        if(b.isB()) b.getRt().setType("true");
+        else b.getRt().setType("false");
+        return b.getRt();
     }
 
     @Override
     public Object visit(Null c) {
-        return c.getN();
+        c.getRt().setType(c.getN());
+        return c.getRt();
     }
 
     @Override
     public Object visit(FloatConst fc) {
-        return "(FLOAT_CONST, \""+ fc.getF() +"\")";
+        fc.getRt().setType("float");
+        return fc.getRt();
     }
 }

@@ -3,7 +3,7 @@ import java.util.ArrayList;
 public class CallProcOP {
     private String val;
     private ArrayList<Expr> elist;
-    private RowTable rt;
+    private RowTable rt = new RowTable();
 
     public CallProcOP(String val, ArrayList<Expr> elist) {
         this.val=val;
@@ -24,6 +24,14 @@ public class CallProcOP {
 
     public String getVal() {
         return val;
+    }
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
     }
 
     public ArrayList<Expr> getElist() {

@@ -1,6 +1,6 @@
 public class IntConst extends Expr {
     private int val;
-    private RowTable rt;
+    private RowTable rt = new RowTable();
 
 
     public IntConst(int x){
@@ -10,6 +10,16 @@ public class IntConst extends Expr {
 
     public int getVal() {
         return val;
+    }
+
+    @Override
+    public RowTable getRt() {
+        return rt;
+    }
+
+    @Override
+    public void setRt(RowTable rt) {
+        this.rt = rt;
     }
 
     public void setVal(int val) {
