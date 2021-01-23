@@ -3,6 +3,7 @@ import java.util.ArrayList;
 public class ProgramOP {
     private ArrayList<VarDeclOP> VarDeclList ;
     private ArrayList<ProcOP> ProcList;
+    private ArrayList<RowTable> globalTable= new ArrayList<RowTable>();
     private RowTable rt;
 
 
@@ -11,6 +12,15 @@ public class ProgramOP {
         this.VarDeclList= VarDeclListOP;
 
     }
+
+    public ArrayList<RowTable> getGlobalTable() {
+        return globalTable;
+    }
+
+    public void setGlobalTable(ArrayList<RowTable> globalTable) {
+        this.globalTable = globalTable;
+    }
+
     public Object accept(Visitor v){
         return v.visit(this);
     }

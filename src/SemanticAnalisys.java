@@ -4,6 +4,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.sun.rowset.internal.Row;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -19,24 +20,47 @@ public class SemanticAnalisys implements Visitor{
         document = documentBuilder.newDocument();
     }
 
+    public void enterScope(ArrayList<RowTable> table){
+        this.typeEnvironment.add(table);
+        }
+    public ArrayList<RowTable> lookup(RowTable rt){
+        for(ArrayList<RowTable> table : this.typeEnvironment){
+            if(table.contains(rt)) return table;
+        }
+        return null;
+    }
+    public void addId(RowTable rt){
+        this.typeEnvironment.get(this.typeEnvironment.size()-1).forEach(rowTable -> {
+            if (rowTable.getSymbol().equals(rt.getSymbol()) && rowTable.getKind().equals(rt.getKind())){
+                throw new Error("La variabile "+ rt.getSymbol() +" e' stata già dichiarata.");
+            } else {
+                this.typeEnvironment.get(this.typeEnvironment.size()-1).add(rt);
+            }
+        });
+    }
+    public boolean probe(String symbol){
+        for(ArrayList<RowTable> table : this.typeEnvironment){
+              for(RowTable rowt : table){
+                  if(rowt.getSymbol().equals(symbol)) return true;
+              }
+            }
+        throw new Error("La variabile " + symbol +" non è stata dichiarate");
+    }
+    public void exitScope(){
+        this.typeEnvironment.remove(this.typeEnvironment.size()-1);
+    }
+
     @Override
     public Object visit(ProgramOP p) {
-        Element programOP = document.createElement("ProgramOP");
-        ArrayList<RowTable> globalTable= new ArrayList<RowTable>();
-        this.typeEnvironment.add(globalTable);
-
+        this.enterScope(p.getGlobalTable());
         for (VarDeclOP var :p.getVarDeclList() ) {
             boolean acc = ((boolean) var.accept(this));
         }
-
-
         for (ProcOP var: p.getProcList()) {
             boolean acc = ((boolean) var.accept(this));
         }
 
-        document.appendChild(programOP);
-
-        return document;
+        return p;
     }
 
     @Override
@@ -53,30 +77,23 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(AssignOP a) {
-        Element assignOP= document.createElement("AssignOP");
-        Element listId= document.createElement("ListID");
         for(Id id : a.getIlist()) {
             String s= (String) id.accept(this);
-            listId.appendChild(document.createTextNode(s));
+            this.probe(s);
         }
-        Element listExpr=document.createElement("ListExpr");
         for(Expr e : a.getElist()) {
             Object o = e.accept(this);
-            if(o instanceof String) listExpr.appendChild(document.createTextNode((String)o));
-            if(o instanceof Element)  listExpr.appendChild((Element)o);
+            //TODO
         }
-        assignOP.appendChild(listId);
-        assignOP.appendChild(listExpr);
 
-        return assignOP;
+        return true;
     }
 
     @Override
     public Object visit(BodyOP b) {
-        Element bodyop= document.createElement("BodyOP");
         for(Stat s:b.getStatList()){
             Element stat= (Element) s.accept(this);
-            bodyop.appendChild(stat);
+            //TODO
         }
 
         return bodyop;
@@ -115,27 +132,19 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(ElifOP c) {
-        Element elifop= document.createElement("ElifOP");
-        Element exprop= document.createElement("ExprOP");
-        Object o= c.getE().accept(this);
-        if(o instanceof String){exprop.appendChild(document.createTextNode(o.toString()));}
-        if(o instanceof Element){exprop.appendChild((Element)o);}
-        elifop.appendChild(exprop);
+        RowTable rt= (RowTable) c.getE().accept(this);
+        if(rt.getType().equals("boolean")){
+            Object bodyop= c.getsList().accept(this);
+            //TODO
+        }else throw new Error("La condizione deve essere di tipo boolean");
 
-        Element bodyop= (Element) c.getsList().accept(this);
-        elifop.appendChild(bodyop);
-
-
-        return elifop;
+        return true;
     }
 
     @Override
     public Object visit(ElseOP c) {
-        Element elseop= document.createElement("ElseOP");
-        Element bodyop= (Element) c.getsList().accept(this);
-        elseop.appendChild(bodyop);
-
-        return elseop;
+        Object bodyop= c.getsList().accept(this);
+        return true;
     }
 
     @Override
@@ -194,45 +203,40 @@ public class SemanticAnalisys implements Visitor{
     @Override
     public Object visit(IdListInitOP x) {
         Element idInitOP=document.createElement("IdInitOP");
+
         if(x.getExpr() != null) {
             String l=(String)x.getId().accept(this);
+            //TODO
             Object r=x.getExpr().accept(this);
-            if(r instanceof String) {
-                l=l.concat(" "+r.toString());
-                idInitOP.appendChild(document.createTextNode(l));
-            }
-            if(r instanceof Element) {
-                idInitOP.appendChild(document.createTextNode(l));
-                idInitOP.appendChild((Element)r);
-            }
+            x.getRt().setSymbol(l);
+            x.getRt().setType(null);/*r.getType TIPOOOOO*/
+
+
         }
         else {
             String l=(String)x.getId().accept(this);
-            idInitOP.appendChild(document.createTextNode(l));
+            x.getRt().setSymbol(l);
         }
-        return idInitOP;
+        return x.getRt();
     }
 
     @Override
     public Object visit(IfOP c) {
         Element ifOP= document.createElement("IfOP");
-        Object o=c.getE().accept(this);
-        Element e= document.createElement("ExprOP");
-        if(o instanceof String){e.appendChild(document.createTextNode(o.toString()));}
-        if(o instanceof Element){e.appendChild((Element)o);}
-        ifOP.appendChild(e);
-
-        Element bodyop=(Element) c.getsList().accept(this);
-        ifOP.appendChild(bodyop);
-
+        RowTable rt= (RowTable)c.getE().accept(this);
+        if(rt.getType().equals("boolean")){
+            Object bodyop=(Object) c.getsList().accept(this);
+            //TODO
+        }
+        else throw new Error("Il tipo della condizione deve essere boolean ");
 
         for(ElifOP elif: c.getElList()){
+            //TODO
             Element elf= (Element)elif.accept(this);
-            ifOP.appendChild(elf);
         }
         if(c.getEl()!=null) {
+            //TODO
             Element elseop =(Element) c.getEl().accept(this);
-            ifOP.appendChild(elseop);
         }
         return ifOP;
     }
@@ -312,19 +316,17 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(ParDeclOP p) {
-        Element parDeclOp=document.createElement("ParDeclOp");
-        parDeclOp.appendChild(document.createTextNode(p.type.toString()));
-        String id_tot="";
+        ArrayList<RowTable> rt= new ArrayList<RowTable>();
+        RowTable rowt= new RowTable();
         for(Id id : p.getIdList()) {
-            String s =(String) id.accept(this);
-            id_tot=id_tot.concat(s);
-            id_tot=id_tot.concat(" ");
+            String symbol= (String)id.accept(this);
+            rowt.setType(p.getType());
+            rowt.setSymbol(symbol);
+            rowt.setKind("var");
+            rt.add(rowt);
         }
-        Element idOp=document.createElement("IdOp");
-        idOp.appendChild(document.createTextNode(id_tot));
-        parDeclOp.appendChild(idOp);
 
-        return parDeclOp;
+        return rt;
     }
 
     @Override
@@ -341,15 +343,14 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(ProcBodyOP pb) {
-        Element procBodyOP = document.createElement("ProcBodyOP");
-
         for (VarDeclOP var : pb.getVdList() ) {
-            Element l= (Element) var.accept(this);
-            procBodyOP.appendChild(l);
+            boolean acc= (boolean) var.accept(this);
+
         }
 
         if(pb.getsList()!=null) {
             Element bodyOP = (Element) pb.getsList().accept(this);
+            //TODO
             procBodyOP.appendChild(bodyOP);
         }
         if(pb.getRe() != null) {
@@ -371,39 +372,48 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(ProcOP p) {
-        Element procOP= document.createElement("ProcOP");
         String idProc=(String)p.getId().accept(this);
-        procOP.appendChild(document.createTextNode(idProc));
+        ArrayList<RowTable> parDeclOP= new ArrayList<RowTable>();
         if(p.getPdList() != null) {
             for (ParDeclOP parDecl  : p.getPdList()) {
-                Element parDeclOP= (Element) parDecl.accept(this);
-                procOP.appendChild(parDeclOP);
+                parDeclOP= (ArrayList<RowTable>) parDecl.accept(this);
+                //parDecl.getRt().setType(parDecl.getType());
             }
         }
-        String resultType = "";
+        ArrayList<String> resTypeOP= new ArrayList<String>();
+
         for (String s: p.getRtList()) {
-            resultType=resultType.concat("("+s+")");
+            resTypeOP.add(s);
         }
-        Element resultTypeListOp = document.createElement("ResultTypeListOp");
-        resultTypeListOp.appendChild(document.createTextNode(resultType));
-        procOP.appendChild(resultTypeListOp);
+        ArrayList<String> parListType= new ArrayList<String>();
+        parDeclOP.forEach(rowTable -> {
+            parListType.add(rowTable.getType().toString());
 
-        Element last= (Element)p.getProcBodyOP().accept(this);
-        procOP.appendChild(last);
+        });
+        ArrayList<ArrayList<String>> listType= new ArrayList<ArrayList<String>>();
+        listType.add(parListType);
+        listType.add(resTypeOP);
+        p.getRowT().setType(listType);
+        p.getRowT().setKind("method");
+        p.getRowT().setSymbol(idProc);
 
-        return procOP;
+        this.addId(p.getRowT());
+
+        parDeclOP.forEach(rowTable -> {
+            p.getLocalTable().add(rowTable);
+        });
+        this.enterScope(p.getLocalTable());
+
+        return true;
     }
 
     @Override
     public Object visit(ReadOP c) {
-        Element readOP= document.createElement("ReadlnOP");
-        Element idList= document.createElement("IdList");
         for(Id i:c.getIdList()){
             String s= i.accept(this).toString();
-            idList.appendChild(document.createTextNode(s));
+            this.probe(s);
         }
-        readOP.appendChild(idList);
-        return readOP;
+        return true;
     }
 
     @Override
@@ -458,22 +468,18 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(VarDeclOP c) {
-        Element varDeclOp=document.createElement("VarDeclOp");
-        varDeclOp.appendChild(document.createTextNode(c.getType()));
-        Element idListInitOp = document.createElement("IdListInitOp");
-        for(IdListInitOP idList : c.getIdListInit()) {
-            this.typeEnvironment.get(this.typeEnvironment.size()-1).forEach(rowTable -> {
-                if (rowTable.getSymbol().equals(idList.getId().toString())) {
-                    throw new Error("La variabile "+ idList.getId().toString() +" e' stata già dichiarata.");
-                } else {
-                    //TODO
-                    //controllare se type id = type expr
-                    idList.getRt().setType(c.type);
-                    idList.getRt().setSymbol(idList.getId().toString());
-                    idList.getRt().setKind("var");
-                    this.typeEnvironment.get(this.typeEnvironment.size()-1).add(idList.getRt());
-                }
-            });
+
+         for(IdListInitOP idList : c.getIdListInit()) {
+             RowTable idInitOP= (RowTable) idList.accept(this) ;
+             idList.getRt().setType(c.type);
+             idList.getRt().setSymbol(idInitOP.getSymbol());
+             idList.getRt().setKind("var");
+
+             if(idInitOP.getType()==null || idInitOP.getType().equals(c.type)){
+                 addId(idList.getRt());
+             }else throw new Error("I tipo di "+idInitOP.getSymbol()+" non è compatibile con "+ idInitOP.getType());
+
+
 
         }
 
@@ -482,36 +488,25 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(WhileOP c) {
-        Element whileOP=document.createElement("WhileOP");
         if(c.getsList1() != null ) {
-            Element bd=(Element) c.getsList1().accept(this);
-            whileOP.appendChild(bd);
+            Object bd=c.getsList1().accept(this);
         }
-        Object o = c.getE().accept(this);
-        Element exprOP=document.createElement("ExprOP");
-        if(o instanceof String){ exprOP.appendChild(document.createTextNode(o.toString()));}
-        if(o instanceof Element){ exprOP.appendChild((Element)o);}
-        whileOP.appendChild(exprOP);
-        Element bd1=(Element) c.getsList2().accept(this);
-        whileOP.appendChild(bd1);
+        RowTable rt = (RowTable) c.getE().accept(this);
+        if(rt.getType().equals("boolean")){
+            Object bd=c.getsList2().accept(this);
+        }else throw new Error("Il tipo della condizione deve essere boolean");
 
-        return whileOP;
+        return true;
     }
 
     @Override
     public Object visit(WriteOP c) {
-        Element writeOP= document.createElement("WriteOP");
-        Element exprList= document.createElement("ExprListOP");
         for(Expr e : c.getExprList()) {
             Element exprOP= document.createElement("ExprOP");
-            Object o=e.accept(this);
-            if(o instanceof String){ exprOP.appendChild(document.createTextNode(o.toString()));}
-            if(o instanceof Element){ exprOP.appendChild((Element)o);}
-            exprList.appendChild(exprOP);
+            RowTable rt= (RowTable) e.accept(this);
+            if(!rt.getType().equals("string"))throw new Error("Write ammette solo tipi string");
         }
-        writeOP.appendChild(exprList);
-
-        return writeOP;
+        return true;
     }
 
     @Override

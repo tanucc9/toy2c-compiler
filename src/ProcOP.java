@@ -9,7 +9,8 @@ public class ProcOP {
     ArrayList<String> rtList;
     //colon
     ProcBodyOP procBodyOP;
-    private RowTable rt;
+    private RowTable rowT= new RowTable();
+    private ArrayList<RowTable> localTable= new ArrayList<RowTable>();
 
 
     public ProcOP(Id id, ArrayList<ParDeclOP> pdList, ArrayList<String> rtList , ProcBodyOP procBodyOP ) {
@@ -25,6 +26,21 @@ public class ProcOP {
         this.rtList=rtList;
     }
 
+    public ArrayList<RowTable> getLocalTable() {
+        return localTable;
+    }
+
+    public void setLocalTable(ArrayList<RowTable> localTable) {
+        this.localTable = localTable;
+    }
+
+    public RowTable getRowT() {
+        return rowT;
+    }
+
+    public void setRowT(RowTable rowT) {
+        this.rowT = rowT;
+    }
     public Id getId() {
         return id;
     }

@@ -3,13 +3,22 @@ import java.util.ArrayList;
 public class ParDeclOP {
     String type;
     ArrayList<Id> IdList;
-    private RowTable rt;
+    private RowTable rt= new RowTable();
 
 
     public ParDeclOP(String type, ArrayList<Id> idList) {
         this.type = type;
         IdList = idList;
     }
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
+    }
+
     public Object accept(Visitor v){
         return v.visit(this);
     }

@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class BodyOP {
     private ArrayList<Stat> statList;
-    private RowTable rt;
+    private RowTable rt = new RowTable();
 
     public BodyOP (ArrayList<Stat> statList) {
         this.statList=statList;
@@ -15,6 +15,14 @@ public class BodyOP {
     public BodyOP(Stat s) {
         this.statList=new ArrayList<Stat>();
         statList.add(s);
+    }
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
     }
 
     public void setStatList(ArrayList<Stat> statList) {

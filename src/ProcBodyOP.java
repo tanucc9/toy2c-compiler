@@ -4,7 +4,7 @@ public class ProcBodyOP {
     private ArrayList<VarDeclOP> vdList;
     private BodyOP sList;
     private ArrayList<Expr> re;
-    private RowTable rt;
+    private RowTable rt= new RowTable();
 
     public ProcBodyOP(ArrayList<VarDeclOP> vdList, BodyOP sList,ArrayList<Expr> re){
         this.vdList= vdList;
@@ -14,6 +14,14 @@ public class ProcBodyOP {
     public ProcBodyOP(ArrayList<VarDeclOP> vdList, ArrayList<Expr> re){
         this.vdList= vdList;
         this.re = re;
+    }
+
+    public RowTable getRt() {
+        return rt;
+    }
+
+    public void setRt(RowTable rt) {
+        this.rt = rt;
     }
 
     public ArrayList<VarDeclOP> getVdList() {

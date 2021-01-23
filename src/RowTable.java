@@ -1,7 +1,8 @@
 public class RowTable {
-    private String symbol, kind, type;
+    private String symbol, kind;
+    private Object type;
 
-    public RowTable(String symbol, String kind, String type) {
+    public RowTable(String symbol, String kind, Object type) {
         this.symbol = symbol;
         this.kind = kind;
         this.type = type;
@@ -25,11 +26,11 @@ public class RowTable {
         this.kind = kind;
     }
 
-    public String getType() {
+    public Object getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Object type) {
         this.type = type;
     }
 }
