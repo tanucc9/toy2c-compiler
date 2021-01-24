@@ -7,6 +7,10 @@ public class RowTable {
         this.type = type;
     }
 
+    public RowTable(String symbol) {
+        this.symbol = symbol;
+    }
+
     public RowTable() {}
 
     public String getSymbol() {

@@ -25,32 +25,70 @@ public class SemanticAnalisys implements Visitor{
         }
 
     public ArrayList<RowTable> lookup(String symbol, String kind){
-        for(ArrayList<RowTable> table : this.typeEnvironment){
-            for(RowTable rowt : table){
-                if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return table;
+
+        for(int i = this.typeEnvironment.size()-1; i>=0; i--) {
+            for(RowTable rowt : this.typeEnvironment.get(i)){
+                if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return this.typeEnvironment.get(i);
             }
         }
+
         return null;
     }
     public void addId(RowTable rt){
         this.typeEnvironment.get(this.typeEnvironment.size()-1).forEach(rowTable -> {
             if (rowTable.getSymbol().equals(rt.getSymbol()) && rowTable.getKind().equals(rt.getKind())){
-                throw new Error("La variabile "+ rt.getSymbol() +" e' stata già dichiarata.");
+                throw new Error("L'id' "+ rt.getSymbol() +" e' stata già dichiarata.");
             } else {
                 this.typeEnvironment.get(this.typeEnvironment.size()-1).add(rt);
             }
         });
     }
     public boolean probe(String symbol, String kind){
-        for(ArrayList<RowTable> table : this.typeEnvironment){
-              for(RowTable rowt : table){
+        for(int i = this.typeEnvironment.size()-1; i>=0; i--) {
+              for(RowTable rowt : this.typeEnvironment.get(i)){
                   if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return true;
               }
             }
-        throw new Error("La variabile " + symbol +" non è stata dichiarate");
+        return false;
     }
     public void exitScope(){
         this.typeEnvironment.remove(this.typeEnvironment.size()-1);
+    }
+
+    public String isCompatibleType(String operazione, String type1, String type2) {
+
+        switch (operazione) {
+            //TODO
+            case "math_operators":
+                if(type1.equals("float") && type2.equals("float")) return "float";
+                if(type1.equals("int") && type2.equals("int")) return "int";
+                if(type1.equals("float") || type2.equals("float")) return "float";
+                throw new Error("Non è possibile effettuare l'addizione tra "+ type1 +" e "+ type2);
+            case "boolean_operators":
+                if(type1.equals("bool") && type2.equals("bool")) return "bool";
+                else throw new Error("Non è possibile effettuare l'operazione booleana tra "+ type1 +" e "+ type2);
+            case "boolean_not":
+                if(type1.equals("bool")) return "bool";
+                else throw new Error("Non è possibile effettuare l'operazione booleana con "+ type1);
+            case "uminus":
+                String res = this.getResultUminusType(type1);
+                if (res != null) {
+                    throw new Error("Non è possibile aggiungere uminus con tipo "+ type1);
+                }
+
+        }
+
+        //TODO
+        return "";
+    }
+
+    private String getResultUminusType(String type) {
+        if (type.equals("int")) return "int";
+        if(type.equals("float")) return "float";
+        String[] resType = type.split("->")[1].split(",");
+        if(resType.length == 1 && ( resType[0].equals("float") || resType[0].equals("int") )) return resType[0];
+
+        return null;
     }
 
     @Override
@@ -63,32 +101,33 @@ public class SemanticAnalisys implements Visitor{
             boolean acc = ((boolean) var.accept(this));
         }
 
+        this.exitScope();
+
         return p;
     }
 
     @Override
     public Object visit(AndOP a) {
-        Element andOP = document.createElement("AndOP");
-        Object e= a.getE().accept(this);
-        if(e instanceof String){andOP.appendChild(document.createTextNode(e.toString()));}
-        if(e instanceof Element){andOP.appendChild((Element)e);}
-        Object e1= a.getE1().accept(this);
-        if(e1 instanceof String){andOP.appendChild(document.createTextNode(e1.toString()));}
-        if(e1 instanceof Element){andOP.appendChild((Element)e1);}
-        return andOP;
+        RowTable expr1= (RowTable) a.getE().accept(this);
+        RowTable expr2= (RowTable) a.getE1().accept(this);
+
+        String resultType = this.isCompatibleType("boolean_operators", expr1.getType(), expr2.getType());
+
+        a.getRt().setType(resultType);
+        return a.getRt();
     }
 
     @Override
     public Object visit(AssignOP a) {
         for(Id id : a.getIlist()) {
-            String s= (String) id.accept(this);
-            this.probe(s, "var");
+            if(!this.probe(id.getId(), "var") ) throw new Error("La variabile " + id.getId() +" non è stata dichiarate");
         }
         for(Expr e : a.getElist()) {
             Object o = e.accept(this);
             //TODO
         }
 
+        //TODO
         return true;
     }
 
@@ -147,14 +186,13 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(DivOP d) {
-        Element divOP= document.createElement("DivOP");
-        Object e= d.getE().accept(this);
-        if(e instanceof String){divOP.appendChild(document.createTextNode(e.toString()));}
-        if(e instanceof Element){divOP.appendChild((Element)e);}
-        Object e1= d.getE1().accept(this);
-        if(e1 instanceof String){divOP.appendChild(document.createTextNode(e1.toString()));}
-        if(e1 instanceof Element){divOP.appendChild((Element)e1);}
-        return divOP;
+        RowTable expr1= (RowTable) d.getE().accept(this);
+        RowTable expr2= (RowTable) d.getE1().accept(this);
+
+        String resultType = this.isCompatibleType("math_operators",expr1.getType(), expr2.getType());
+
+        d.getRt().setType(resultType);
+        return d.getRt();
     }
 
     @Override
@@ -224,7 +262,15 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(Id id) {
-        return id.getId();
+        ArrayList<RowTable> table = this.lookup(id.getId(), "var");
+        if(table == null) throw new Error("La variabile " + id.getId() +" non è stata dichiarate");
+        else {
+            for (RowTable rt : table ) {
+                if(rt.getSymbol().equals(id.getId())) return rt;
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -232,7 +278,7 @@ public class SemanticAnalisys implements Visitor{
         Element idInitOP=document.createElement("IdInitOP");
 
         if(x.getExpr() != null) {
-            String l=(String)x.getId().accept(this);
+            String l=x.getId().getId();
             //TODO
             Object r=x.getExpr().accept(this);
             x.getRt().setSymbol(l);
@@ -297,14 +343,13 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(MinusOP m) {
-        Element mOP= document.createElement("MinusOP");
-        Object e= m.getE().accept(this);
-        if(e instanceof String){mOP.appendChild(document.createTextNode(e.toString()));}
-        if(e instanceof Element){mOP.appendChild((Element)e);}
-        Object e1= m.getE1().accept(this);
-        if(e1 instanceof String){mOP.appendChild(document.createTextNode(e1.toString()));}
-        if(e1 instanceof Element){mOP.appendChild((Element)e1);}
-        return mOP;
+        RowTable expr1= (RowTable) m.getE().accept(this);
+        RowTable expr2= (RowTable) m.getE1().accept(this);
+
+        String resultType = this.isCompatibleType("math_operators",expr1.getType(), expr2.getType());
+
+        m.getRt().setType(resultType);
+        return m.getRt();
     }
 
     @Override
@@ -321,24 +366,24 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(NotOP n) {
-        Element notOP= document.createElement("NotOP");
-        Object o=n.getNe().accept(this);
-        if(o instanceof String){ notOP.appendChild(document.createTextNode(o.toString()));}
-        if(o instanceof Element){notOP.appendChild((Element)o);}
+        RowTable expr= (RowTable) n.getNe().accept(this);
 
-        return notOP;
+
+        String resultType = this.isCompatibleType("boolean_not", expr.getType(), null);
+
+        n.getRt().setType(resultType);
+        return n.getRt();
     }
 
     @Override
     public Object visit(OrOP or) {
-        Element orOP= document.createElement("OrOP");
-        Object e= or.getE().accept(this);
-        if(e instanceof String){orOP.appendChild(document.createTextNode(e.toString()));}
-        if(e instanceof Element){orOP.appendChild((Element)e);}
-        Object e1= or.getE1().accept(this);
-        if(e1 instanceof String){orOP.appendChild(document.createTextNode(e1.toString()));}
-        if(e1 instanceof Element){orOP.appendChild((Element)e1);}
-        return orOP;
+        RowTable expr1= (RowTable) or.getE().accept(this);
+        RowTable expr2= (RowTable) or.getE1().accept(this);
+
+        String resultType = this.isCompatibleType("boolean_operators", expr1.getType(), expr2.getType());
+
+        or.getRt().setType(resultType);
+        return or.getRt();
     }
 
     @Override
@@ -346,7 +391,7 @@ public class SemanticAnalisys implements Visitor{
         ArrayList<RowTable> rt= new ArrayList<RowTable>();
         RowTable rowt= new RowTable();
         for(Id id : p.getIdList()) {
-            String symbol= (String)id.accept(this);
+            String symbol= id.getId();
             rowt.setType(p.getType());
             rowt.setSymbol(symbol);
             rowt.setKind("var");
@@ -358,14 +403,13 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(PlusOP p) {
-        Element plusOP= document.createElement("PlusOP");
-        Object e= p.getE().accept(this);
-        if(e instanceof String){plusOP.appendChild(document.createTextNode(e.toString()));}
-        if(e instanceof Element){plusOP.appendChild((Element)e);}
-        Object e1= p.getE1().accept(this);
-        if(e1 instanceof String){plusOP.appendChild(document.createTextNode(e1.toString()));}
-        if(e1 instanceof Element){plusOP.appendChild((Element)e1);}
-        return plusOP;
+        RowTable expr1= (RowTable) p.getE().accept(this);
+        RowTable expr2= (RowTable) p.getE1().accept(this);
+
+        String resultType = this.isCompatibleType("math_operators",expr1.getType(), expr2.getType());
+
+        p.getRt().setType(resultType);
+        return p.getRt();
     }
 
     @Override
@@ -393,13 +437,14 @@ public class SemanticAnalisys implements Visitor{
             resultType.appendChild(exprList);
             procBodyOP.appendChild(resultType);
         }
+        //TODO
 
         return procBodyOP;
     }
 
     @Override
     public Object visit(ProcOP p) {
-        String idProc=(String)p.getId().accept(this);
+        String idProc=p.getId().getId();
         ArrayList<RowTable> parDeclOP= new ArrayList<RowTable>();
         if(p.getPdList() != null) {
             for (ParDeclOP parDecl  : p.getPdList()) {
@@ -430,14 +475,18 @@ public class SemanticAnalisys implements Visitor{
         });
         this.enterScope(p.getLocalTable());
 
+        //TODO
+        p.getProcBodyOP().accept(this);
+
+        this.exitScope();
+
         return true;
     }
 
     @Override
     public Object visit(ReadOP c) {
         for(Id i:c.getIdList()){
-            String s= i.accept(this).toString();
-            this.probe(s, "var");
+            if(!this.probe(i.getId(), "var") ) throw new Error("La variabile " + i.getId() +" non è stata dichiarate");
         }
         return true;
     }
@@ -472,24 +521,22 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(TimesOP t) {
-        Element tOP= document.createElement("TimesOP");
-        Object e= t.getE().accept(this);
-        if(e instanceof String){tOP.appendChild(document.createTextNode(e.toString()));}
-        if(e instanceof Element){tOP.appendChild((Element)e);}
-        Object e1= t.getE1().accept(this);
-        if(e1 instanceof String){tOP.appendChild(document.createTextNode(e1.toString()));}
-        if(e1 instanceof Element){tOP.appendChild((Element)e1);}
-        return tOP;
+        RowTable expr1= (RowTable) t.getE().accept(this);
+        RowTable expr2= (RowTable) t.getE1().accept(this);
+
+        String resultType = this.isCompatibleType("math_operators",expr1.getType(), expr2.getType());
+
+        t.getRt().setType(resultType);
+        return t.getRt();
     }
 
     @Override
     public Object visit(UMinusOP u) {
-        Element uminusOP =document.createElement("UminusOP");
-        Object o = u.getE().accept(this);
-        if(o instanceof String) uminusOP.appendChild(document.createTextNode(o.toString()));
-        else uminusOP.appendChild((Element)o);
+        RowTable rt = (RowTable) u.getE().accept(this);
+        String res = this.isCompatibleType("uminus", rt.getType(), null);
+        u.getRt().setType(res);
 
-        return uminusOP;
+        return u.getRt();
     }
 
     @Override

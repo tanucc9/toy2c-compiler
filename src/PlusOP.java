@@ -1,6 +1,5 @@
 public class PlusOP extends Expr {
     Expr e, e1;
-    private RowTable rt;
 
     public PlusOP(Expr e, Expr e1){
         this.e=e;
