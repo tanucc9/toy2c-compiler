@@ -1,6 +1,5 @@
 public class LessThanOP extends Expr{
     private Expr e, e1;
-    private RowTable rt;
 
     public LessThanOP(Expr e, Expr e1){
         this.e=e;

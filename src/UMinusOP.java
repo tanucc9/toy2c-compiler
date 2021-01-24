@@ -1,7 +1,6 @@
 public class UMinusOP extends Expr{
 
     private Expr e;
-    private RowTable rt;
 
     public UMinusOP(Expr e){
         this.e=e;

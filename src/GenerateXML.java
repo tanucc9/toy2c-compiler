@@ -410,22 +410,6 @@ public class GenerateXML implements Visitor{
     }
 
     @Override
-    public Object visit(ReturnExprsOP c) {
-        Element returnExpr= document.createElement("ReturnExpr");
-        Element exprList= document.createElement("ExprListOP");
-        for(Expr e : c.getExprList()) {
-            Element exprOP= document.createElement("ExprOP");
-            Object o=e.accept(this);
-            if(o instanceof String){ exprOP.appendChild(document.createTextNode(o.toString()));}
-            if(o instanceof Element){ exprOP.appendChild((Element)o);}
-            exprList.appendChild(exprOP);
-        }
-        returnExpr.appendChild(exprList);
-
-        return returnExpr;
-    }
-
-    @Override
     public Object visit(Stat s) {
         Element stat = document.createElement("Stat");
         if(s.getCp() != null){

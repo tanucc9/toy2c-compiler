@@ -5,7 +5,6 @@ public class IfOP extends Stat{
     private BodyOP sList;
     private ArrayList<ElifOP>elList;
     private ElseOP el;
-    private RowTable rt;
 
     public IfOP(Expr e, BodyOP sList, ArrayList<ElifOP> elList, ElseOP el) {
         super();

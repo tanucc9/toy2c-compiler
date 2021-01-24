@@ -3,7 +3,6 @@ import java.util.ArrayList;
 public class AssignOP extends Stat {
     private ArrayList<Id> ilist;
     private ArrayList<Expr> elist;
-    private RowTable rt;
 
     /* deprecated */
     private ArrayList<AssignSingle> a;

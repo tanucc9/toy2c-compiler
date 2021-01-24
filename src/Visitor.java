@@ -26,7 +26,6 @@ public interface Visitor {
     public Object visit(ProcBodyOP c);
     public Object visit(ProcOP c);
     public Object visit(ReadOP c);
-    public Object visit(ReturnExprsOP c);
     public Object visit(Stat c);
     public Object visit(TimesOP c);
     public Object visit(UMinusOP c);

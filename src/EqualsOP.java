@@ -1,6 +1,5 @@
 public class EqualsOP extends Expr {
     Expr e, e1;
-    private RowTable rt;
 
     public EqualsOP(Expr e, Expr e1){
         this.e=e;
