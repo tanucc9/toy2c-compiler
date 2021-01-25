@@ -18,11 +18,21 @@ proc writeNewLines(int n)void :
 	od;
 	->
 corp;
+proc ahooo(int n)int :
+	while n > 0 do
+		write("\n");
+		n := n -1;
+	od;
+	-> 8
+corp;
 
 
 proc main()void :
-	int a, b, c:= -2.3;
-	a, b, c := multAddDiff();
+	int a, b, d, c:=3;
+	bool f;
+	string ss:="d"*nome;
+	f:= !true;
+	a, c ,b:= multAddDiff();
 	write ("Ciao ", nome);
 	write("I tuoi valori sono:\n", a, " per la moltiplicazione\n", b,
 		" per la somma, e \n", c, " per la differenza");

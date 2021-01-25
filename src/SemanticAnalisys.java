@@ -57,12 +57,13 @@ public class SemanticAnalisys implements Visitor{
                 if(type1.equals("int") && type2.equals("int")) return "int";
                 if(type1.equals("float") && type2.equals("int")) return "float";
                 if(type1.equals("int") && type2.equals("float")) return "float";
-                throw new Error("Non è possibile effettuare l'addizione tra "+ type1 +" e "+ type2);
+                throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
             case "boolean_operators":
                 if(type1.equals("bool") && type2.equals("bool")) return "bool";
                 else throw new Error("Non è possibile effettuare l'operazione booleana tra "+ type1 +" e "+ type2);
             case "boolean_not":
-                if(type1.equals("bool")) return "bool";
+                String resNot = this.getResultNotType(type1);
+                if(resNot!=null) return resNot;
                 else throw new Error("Non è possibile effettuare l'operazione booleana con "+ type1);
             case "uminus":
                 String res = this.getResultUminusType(type1);
@@ -83,6 +84,13 @@ public class SemanticAnalisys implements Visitor{
         if(type.equals("float")) return "float";
         String[] resType = this.getStringSplitted(type, 1);
         if(resType.length == 1 && ( resType[0].equals("float") || resType[0].equals("int") )) return resType[0];
+
+        return null;
+    }
+    private String getResultNotType(String type) {
+        if (type.equals("bool")) return "bool";
+        String[] resType = this.getStringSplitted(type, 1);
+        if(resType.length == 1 && resType[0].equals("bool") ) return resType[0];
 
         return null;
     }
@@ -139,9 +147,11 @@ public class SemanticAnalisys implements Visitor{
         ArrayList<String> idType= new ArrayList<String>();
         for(Id id : a.getIlist()) {
             tableId= this.lookup(id.getId(), "var") ;
-            for(RowTable idrt : tableId){
-                if(idrt.getSymbol().equals(id.getId()) && idrt.getKind().equals("var")) idType.add(idrt.getType());
-            }
+            if(tableId!=null) {
+                for (RowTable idrt : tableId) {
+                    if (idrt.getSymbol().equals(id.getId()) && idrt.getKind().equals("var")) idType.add(idrt.getType());
+                }
+            }else throw new Error ("La variabile "+ id.getId() +" non è stata dichiarata.");
         }
         for(Expr e : a.getElist()) {
             RowTable rt= (RowTable) e.accept(this);
@@ -365,8 +375,18 @@ public class SemanticAnalisys implements Visitor{
         String id =x.getId().getId();
         if(x.getExpr() != null) {
             RowTable r=(RowTable) x.getExpr().accept(this);
-            x.getRt().setSymbol(id);
-            x.getRt().setType(r.getType());
+            if(r.getKind() != null && r.getKind().equals("method")){
+                String[] resType = this.getStringSplitted(r.getType(), 1);
+                if(resType.length==1) {
+                    x.getRt().setSymbol(id);
+                    x.getRt().setType(resType[0]);
+                }
+                else throw new Error("La funzione ritorna un numero di valori non atteso.");
+            } else{
+                x.getRt().setSymbol(id);
+                x.getRt().setType(r.getType());
+            }
+
         }
         else {
             x.getRt().setSymbol(id);
@@ -721,14 +741,15 @@ public class SemanticAnalisys implements Visitor{
     public Object visit(VarDeclOP c) {
 
          for(IdListInitOP idList : c.getIdListInit()) {
-             RowTable idInitOP= (RowTable) idList.accept(this) ;
-             idList.getRt().setType(c.getType());
-             idList.getRt().setSymbol(idInitOP.getSymbol());
+             idList.setRt((RowTable) idList.accept(this));
              idList.getRt().setKind("var");
-             if(idInitOP.getType()==null || idInitOP.getType().equals(idList.getRt().getType())){
+             if(idList.getRt().getType()==null){
+                 idList.getRt().setType(c.getType());
                  this.addId(idList.getRt());
-             }else throw new Error("I tipo di "+idInitOP.getSymbol()+" non è compatibile con "+ idInitOP.getType());
-
+             }
+             else if(idList.getRt().getType().equals(c.getType())){
+                 this.addId(idList.getRt());
+             }else throw new Error("I tipo di "+idList.getRt().getSymbol()+" non è compatibile con "+ idList.getRt().getType());
         }
         return true;
     }
