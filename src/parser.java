@@ -559,7 +559,7 @@ class CUP$parser$actions {
           case 10: // Type ::= STRING 
             {
               String RESULT =null;
-		RESULT= "String";
+		RESULT= "string";
               CUP$parser$result = parser.getSymbolFactory().newSymbol("Type",21, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;

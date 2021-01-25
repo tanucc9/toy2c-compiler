@@ -60,7 +60,7 @@ VarDecl ::= Type:t IdListInit:iListInit SEMI {:RESULT= new VarDeclOP(t,iListInit
 Type ::= INT        {:RESULT= "int";:}
         | BOOL      {:RESULT= "bool";:}
         | FLOAT     {:RESULT= "float";:}
-        | STRING    {:RESULT= "String";:}
+        | STRING    {:RESULT= "string";:}
     ;
 IdListInit ::= ID:val                                  {: ArrayList<IdListInitOP> list= new ArrayList<IdListInitOP>(); list.add(new IdListInitOP(new Id(val))); RESULT= list;:}
    | IdListInit:iListInit COMMA ID:val                 {: iListInit.add(new IdListInitOP(new Id(val))); RESULT= iListInit; :}

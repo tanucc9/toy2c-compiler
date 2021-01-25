@@ -24,15 +24,20 @@ public class Tester {
         ProgramOP pOP= (ProgramOP) p.parse().value;
 
 
-        GenerateXML xml = new GenerateXML();
+        SemanticAnalisys sa = new SemanticAnalisys();
+        sa.visit(pOP);
+
+
+
+       /* GenerateXML xml = new GenerateXML();
         Document xml_generated = (Document)pOP.accept(xml);
 
-        //Creazione file
+
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource domSource = new DOMSource(xml_generated);
         StreamResult streamResult = new StreamResult(new File(System.getProperty("user.dir")+"\\albero_sintattico.xml"));
 
-        transformer.transform(domSource, streamResult);
+        transformer.transform(domSource, streamResult);*/
     }
 }
