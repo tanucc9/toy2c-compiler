@@ -10,22 +10,22 @@ public class SemanticAnalisys implements Visitor{
 
     private void enterScope(ArrayList<RowTable> table){
         this.typeEnvironment.add(table);
-        }
+    }
 
     private ArrayList<RowTable> lookup(String symbol, String kind){
-
         for(int i = this.typeEnvironment.size()-1; i>=0; i--) {
             for(RowTable rowt : this.typeEnvironment.get(i)){
                 if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return this.typeEnvironment.get(i);
             }
         }
-
         return null;
     }
+
     private void addId(RowTable rt){
         this.typeEnvironment.get(this.typeEnvironment.size()-1).forEach(rowTable -> {
             if (rowTable.getSymbol().equals(rt.getSymbol()) && rowTable.getKind().equals(rt.getKind())){
-                throw new Error("L'id' "+ rt.getSymbol() +" e' stata già dichiarata.");
+                if(rt.getKind().equals("var")) throw new Error("La variabile "+ rt.getSymbol() +" è stata già dichiarata.");
+                if(rt.getKind().equals("method")) throw new Error("La funzione "+ rt.getSymbol() +" è stata già dichiarata.");
             }
         });
         this.typeEnvironment.get(this.typeEnvironment.size()-1).add(rt);
@@ -211,8 +211,8 @@ public class SemanticAnalisys implements Visitor{
                 parTypeCpList.add(s);
             }
 
-            if(parType.size() != parTypeCpList.size()) throw new Error("Il numero dei parametri passati al proc"+ cp.getVal() +" non corrisponde al numero dei parametri attesi.");
-            if (!parType.equals(parTypeCpList)) throw new Error(" I tipi dei parametri passati al proc"+ cp.getVal() +" non corrispondono a quelli attesi. ");
+            if(parType.size() != parTypeCpList.size()) throw new Error("Il numero dei parametri passati al proc "+ cp.getVal() +" non corrisponde al numero dei parametri attesi.");
+            if (!parType.equals(parTypeCpList)) throw new Error(" I tipi dei parametri passati al proc "+ cp.getVal() +" non corrispondono a quelli attesi. ");
 
         }
         return cp.getRt();
@@ -535,8 +535,8 @@ public class SemanticAnalisys implements Visitor{
     @Override
     public Object visit(ParDeclOP p) {
         ArrayList<RowTable> rt= new ArrayList<RowTable>();
-        RowTable rowt= new RowTable();
         for(Id id : p.getIdList()) {
+            RowTable rowt= new RowTable();
             String symbol= id.getId();
             rowt.setType(p.getType());
             rowt.setSymbol(symbol);
@@ -610,11 +610,10 @@ public class SemanticAnalisys implements Visitor{
         ArrayList<RowTable> parDeclOP= new ArrayList<RowTable>();
         if(p.getPdList() != null) {
             for (ParDeclOP parDecl  : p.getPdList()) {
-                parDeclOP= (ArrayList<RowTable>) parDecl.accept(this);
-                //parDecl.getRt().setType(parDecl.getType());
+                parDeclOP.addAll( (ArrayList<RowTable>) parDecl.accept(this) );
             }
         }
-        ArrayList<String> prova  = p.getRtList();
+
         String resType = "->";
         for (String s: p.getRtList()) {
             resType=resType.concat(s+",");
@@ -639,10 +638,13 @@ public class SemanticAnalisys implements Visitor{
         }
         this.addId(p.getRowT());
 
-        parDeclOP.forEach(rowTable -> {
-            p.getLocalTable().add(rowTable);
-        });
+
         this.enterScope(p.getLocalTable());
+
+        parDeclOP.forEach(rowTable -> {
+            this.addId(rowTable);
+        });
+
 
         ArrayList<String> returnType=(ArrayList<String>) p.getProcBodyOP().accept(this);
 
@@ -778,8 +780,8 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(Bool b) {
-        if(b.isB()) b.getRt().setType("true");
-        else b.getRt().setType("false");
+        if(b.isB()) b.getRt().setType("bool");
+        else b.getRt().setType("bool");
         return b.getRt();
     }
 
