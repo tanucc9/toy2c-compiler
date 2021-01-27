@@ -363,7 +363,10 @@ public class SemanticAnalisys implements Visitor{
         if(table == null) throw new Error("La variabile " + id.getId() +" non è stata dichiarata");
         else {
             for (RowTable rt : table ) {
-                if(rt.getSymbol().equals(id.getId()) && rt.getKind().equals("var")) return rt;
+                if(rt.getSymbol().equals(id.getId()) && rt.getKind().equals("var")) {
+                    id.setRt(rt);
+                    return id.getRt();
+                }
             }
         }
 
