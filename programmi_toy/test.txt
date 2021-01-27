@@ -24,7 +24,7 @@ proc main()void :
 	a, b, c := multAddDiff();
 	writeNewLines(c);
 	write ("Ciao ", nome);
-	write("I tuoi valori sono:\n", a, " per la moltiplicazione\n", b,
+	write("I tuoi valori sono:\n", a(), " per la moltiplicazione\n", b,
 		" per la somma, e \n", c, " per la differenza");
 		->
 corp;

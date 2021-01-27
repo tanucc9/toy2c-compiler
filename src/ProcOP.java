@@ -12,7 +12,7 @@ public class ProcOP {
     private RowTable rowT= new RowTable();
     private ArrayList<RowTable> localTable= new ArrayList<RowTable>();
 
-
+    public ProcOP () {}
     public ProcOP(Id id, ArrayList<ParDeclOP> pdList, ArrayList<String> rtList , ProcBodyOP procBodyOP ) {
         this.id = id;
         this.pdList=pdList;

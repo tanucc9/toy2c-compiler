@@ -1,16 +1,22 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
-//EXPR: pos0 codiceC e pos1 idfunzione se è callproc o null
+
+
+
 public class CGenerator implements Visitor{
 
     private ArrayList<ArrayList<RowTable>> typeEnvironment;
     private String fileC;
     private ArrayList<String> fileSplitted;
     private ArrayList<StructC> structMethod;
+    private ProcOP currentProc;
+
     public CGenerator () {
         this.typeEnvironment = new ArrayList<ArrayList<RowTable>>();
         fileC="";
         fileSplitted = new ArrayList<String>();
         structMethod= new ArrayList<StructC>();
+        this.currentProc = new ProcOP();
     }
 
     private void enterScope(ArrayList<RowTable> table){
@@ -105,6 +111,18 @@ public class CGenerator implements Visitor{
         return type.split("->")[index].split(",");
     }
 
+    private String getTypeInWriteOP (String type) {
+        if (type.equals("int") || type.equals("bool")) {
+            return "%d";
+        } else if (type.equals("float")) {
+            return "%f";
+        } else if (type.equals("string")) {
+            return "%s";
+        }
+
+        return null;
+    }
+
     @Override
     public Object visit(ProgramOP p) {
         this.fileSplitted.add("#include <stdio.h>\n"
@@ -130,63 +148,43 @@ public class CGenerator implements Visitor{
 
     @Override
     public Object visit(AndOP a) {
-        RowTable expr1= (RowTable) a.getE().accept(this);
-        RowTable expr2= (RowTable) a.getE1().accept(this);
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione all'AND.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione all'AND.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("boolean_operators",type1, type2);
-        a.getRt().setType(resultType);
-        return a.getRt();
+        ArrayList<String> expr1= (ArrayList<String>) a.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) a.getE1().accept(this);
+
+        return expr1.get(0) + " && " + expr2.get(0);
     }
 
     @Override
     public Object visit(AssignOP a) {
-        ArrayList<RowTable> tableId;
-        ArrayList<String> exprType= new ArrayList<String>();
-        ArrayList<String> idType= new ArrayList<String>();
+        ArrayList<String> exprNode= new ArrayList<String>();
+        ArrayList<String> idNode= new ArrayList<String>();
         for(Id id : a.getIlist()) {
-            tableId= this.lookup(id.getId(), "var") ;
-            if(tableId!=null) {
-                for (RowTable idrt : tableId) {
-                    if (idrt.getSymbol().equals(id.getId()) && idrt.getKind().equals("var")) idType.add(idrt.getType());
-                }
-            }else throw new Error ("La variabile "+ id.getId() +" non è stata dichiarata.");
+            idNode.add(id.getId()+" = ");
         }
         for(Expr e : a.getElist()) {
-            RowTable rt= (RowTable) e.accept(this);
-            if(rt.getKind() != null && rt.getKind().equals("method")) {
-                ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
-                if(table !=null) {
-                    for(RowTable row : table) {
-                        if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
-                    }
-                    String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
+            ArrayList<String> expr= (ArrayList<String>) e.accept(this);
 
-                    for(String type : resType) {
-                        exprType.add(type);
+            if(expr.get(1) != null){
+                StructC structC = null;
+                for(StructC sc: this.structMethod){
+                    if(sc.getNome().equals(expr.get(1)+"_struct")) structC = sc;
+                }
+                if(structC != null){
+                    for(int i=0; i< structC.getIndex();i++){
+                        exprNode.add(structC.getNome()+".var"+i);
                     }
-                } else throw new Error ("Il proc "+ e.getCp().getVal() +" non è stato dichiarato.");
+                } else exprNode.add(expr.get(0));
             } else {
-                exprType.add(rt.getType());
+                exprNode.add(expr.get(0));
             }
         }
-        if(exprType.size() != idType.size()) throw new Error("Il numero delle espressioni non corrisponde al numero delle variabili attese.");
-        if (!exprType.equals(idType)) throw new Error(" I tipi delle espressioni assegnate non corrispondono a quelli attesi. ");
 
-        return true;
+        String assignNode = "";
+        for(int i = 0; i<idNode.size(); i++) {
+            assignNode += idNode.get(i) + exprNode.get(i) + ";\n";
+        }
+
+        return assignNode;
     }
 
     @Override
@@ -207,7 +205,7 @@ public class CGenerator implements Visitor{
                 if(expr.get(1)!=null){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
-                        if(sc.getNome().equals(expr.get(1))) structC = sc;
+                        if(sc.getNome().equals(expr.get(1) + "_struct")) structC = sc;
                     }
                     if(structC != null){
                         for(int i=0; i< structC.getIndex();i++){
@@ -222,72 +220,47 @@ public class CGenerator implements Visitor{
                 if(cp.getElist().size()-1 != cp.getElist().indexOf(e)) callProcNode += ", ";
             }
         }
-        callProcNode +=");";
+        callProcNode +=")";
         return callProcNode;
     }
 
     @Override
     public Object visit(DivOP d) {
-        RowTable expr1= (RowTable) d.getE().accept(this);
-        RowTable expr2= (RowTable) d.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) d.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) d.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando alla divisione.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando alla divisione.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("math_operators",type1, type2);
-
-        d.getRt().setType(resultType);
-        return d.getRt();
+        return expr1.get(0) + " / " + expr2.get(0);
     }
 
     @Override
     public Object visit(ElifOP c) {
-        RowTable rt= (RowTable) c.getE().accept(this);
-        if(!rt.getType().equals("bool"))throw new Error("La condizione deve essere di tipo boolean");
-        return (boolean) c.getsList().accept(this);
+        String elifNode = "else if (";
+        ArrayList<String> expr= (ArrayList<String>) c.getE().accept(this);
+
+        elifNode += expr.get(0);
+        elifNode += ") {\n";
+
+        elifNode += (String) c.getsList().accept(this);
+        elifNode += "}\n";
+
+        return elifNode;
     }
 
     @Override
     public Object visit(ElseOP e) {
-        return (boolean) e.getsList().accept(this);
+        String elseNode = "else {\n";
+        elseNode += (String) e.getsList().accept(this);
+        elseNode += "}\n";
+
+        return elseNode;
     }
 
     @Override
     public Object visit(EqualsOP eq) {
-        RowTable expr1= (RowTable) eq.getE().accept(this);
-        RowTable expr2= (RowTable) eq.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) eq.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) eq.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione all'Equals.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione all'Equals.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("relop",type1, type2);
-
-        eq.getRt().setType(resultType);
-        return eq.getRt();
+        return expr1.get(0) + " == " + expr2.get(0);
     }
 
     @Override
@@ -307,70 +280,23 @@ public class CGenerator implements Visitor{
 
     @Override
     public Object visit(GreaterEqualsOP ge) {
-        RowTable expr1= (RowTable) ge.getE().accept(this);
-        RowTable expr2= (RowTable) ge.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) ge.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) ge.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterEquals.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterEquals.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("relop",type1, type2);
-
-        ge.getRt().setType(resultType);
-        return ge.getRt();
+        return expr1.get(0) + " >= " + expr2.get(0);
     }
 
     @Override
     public Object visit(GreaterThanOP gt) {
-        RowTable expr1= (RowTable) gt.getE().accept(this);
-        RowTable expr2= (RowTable) gt.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) gt.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) gt.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterThan.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterThan.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("relop",type1, type2);
-
-        gt.getRt().setType(resultType);
-        return gt.getRt();
+        return expr1.get(0) + " > " + expr2.get(0);
     }
 
     @Override
     public Object visit(Id id) {
-        ArrayList<RowTable> table = this.lookup(id.getId(), "var");
-        if(table == null) throw new Error("La variabile " + id.getId() +" non è stata dichiarata");
-        else {
-            for (RowTable rt : table ) {
-                if(rt.getSymbol().equals(id.getId()) && rt.getKind().equals("var")) return rt;
-            }
-        }
-
-        return null;
+        return id.getId();
     }
 
     @Override
@@ -378,8 +304,8 @@ public class CGenerator implements Visitor{
         String idListInitNode = x.getId().getId();
         if(x.getExpr() != null) {
             idListInitNode += " = ";
-            idListInitNode +=(String) x.getExpr().accept(this);
-            //TODO metodo
+            ArrayList<String> expr = (ArrayList<String>) x.getExpr().accept(this);
+            idListInitNode += expr.get(0);
         }
         return idListInitNode;
     }
@@ -387,167 +313,67 @@ public class CGenerator implements Visitor{
     @Override
     public Object visit(IfOP c) {
         String ifNode="if (";
-        //TODO expr
-        RowTable rt= (RowTable)c.getE().accept(this);
-        ifNode += "){\n";
-
-        //TODO stat
-        boolean bodyop=(boolean) c.getsList().accept(this);
-
-        //TODO elif
-        boolean accElif= false, accElse= false;
+        ArrayList<String> expr= (ArrayList<String>) c.getE().accept(this);
+        ifNode += expr.get(0) + ") {\n";
+        ifNode += (String) c.getsList().accept(this);
+        ifNode += "}\n";
 
         for(ElifOP elif: c.getElList()){
-            accElif =(boolean) elif.accept(this);
+            ifNode += (String) elif.accept(this);
+        }
 
-        }
-        //TODO else
         if(c.getEl()!=null) {
-            accElse =(boolean) c.getEl().accept(this);
+            ifNode += (String) c.getEl().accept(this);
         }
-        return accElif && accElse;
+        return ifNode;
     }
 
     @Override
     public Object visit(LessEqualsOP le) {
-        RowTable expr1= (RowTable) le.getE().accept(this);
-        RowTable expr2= (RowTable) le.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) le.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) le.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al LessEquals.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al LessEquals.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("relop",type1, type2);
-
-        le.getRt().setType(resultType);
-        return le.getRt();
-
-
+        return expr1.get(0) + " <= " + expr2.get(0);
     }
 
 
     @Override
     public Object visit(LessThanOP lt) {
-        RowTable expr1= (RowTable) lt.getE().accept(this);
-        RowTable expr2= (RowTable) lt.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) lt.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) lt.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al LessThan.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al LessThan.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("relop",type1, type2);
-
-        lt.getRt().setType(resultType);
-        return lt.getRt();
+        return expr1.get(0) + " < " + expr2.get(0);
     }
 
     @Override
     public Object visit(MinusOP m) {
-        RowTable expr1= (RowTable) m.getE().accept(this);
-        RowTable expr2= (RowTable) m.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) m.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) m.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando alla sottrazione.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando alla sottrazione.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("math_operators",type1, type2);
-
-        m.getRt().setType(resultType);
-        return m.getRt();
+        return expr1.get(0) + " - " + expr2.get(0);
     }
 
     @Override
     public Object visit(NotEqualsOP ne) {
-        RowTable expr1= (RowTable) ne.getE().accept(this);
-        RowTable expr2= (RowTable) ne.getE1().accept(this);
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al NotEquals.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al NotEquals.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("relop",type1, type2);
+        ArrayList<String> expr1= (ArrayList<String>) ne.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) ne.getE1().accept(this);
 
-        ne.getRt().setType(resultType);
-        return ne.getRt();
+        return expr1.get(0) + " != " + expr2.get(0);
     }
 
     @Override
     public Object visit(NotOP n) {
-        RowTable expr= (RowTable) n.getNe().accept(this);
-        String resultType = this.isCompatibleType("boolean_not", expr.getType(), null);
+        ArrayList<String> expr= (ArrayList<String>) n.getNe().accept(this);
 
-        n.getRt().setType(resultType);
-        return n.getRt();
+        return "! "+expr.get(0);
     }
 
     @Override
     public Object visit(OrOP or) {
-        RowTable expr1= (RowTable) or.getE().accept(this);
-        RowTable expr2= (RowTable) or.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) or.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) or.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione all'OR.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione all'OR.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("boolean_operators",type1, type2);
-
-        or.getRt().setType(resultType);
-        return or.getRt();
+        return expr1.get(0) + " || " + expr2.get(0);
     }
 
     @Override
@@ -563,27 +389,11 @@ public class CGenerator implements Visitor{
 
     @Override
     public Object visit(PlusOP p) {
-        RowTable expr1= (RowTable) p.getE().accept(this);
-        RowTable expr2= (RowTable) p.getE1().accept(this);
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1 ) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando all'addizione.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando all'addizione.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("plus_operators",type1, type2);
+        ArrayList<String> expr1= (ArrayList<String>) p.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) p.getE1().accept(this);
 
-        p.getRt().setType(resultType);
-        return p.getRt();
+        //TODO concatenzazione string strcat(...,..)
+        return expr1.get(0) + " + " + expr2.get(0);
     }
 
     @Override
@@ -594,31 +404,57 @@ public class CGenerator implements Visitor{
         }
 
         if(pb.getsList()!=null) {
-            //TODO stat
-            boolean bodyOP = (boolean) pb.getsList().accept(this);
-        }
-        ArrayList<String> returnType= new ArrayList<String>();
-        if(pb.getRe() != null) {
-            for(Expr e : pb.getRe()) {
-                RowTable rt=(RowTable) e.accept(this);
-                if(rt.getKind() != null && rt.getKind().equals("method")) {
-                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
-                    if(table !=null) {
-                        for(RowTable row : table) {
-                            if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
-                        }
-                        String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
-                        for (String s: resType ) {
-                            returnType.add(s);
-                        }
-                    } else throw new Error ("Il proc "+ e.getCp().getVal() +" non è stato dichiarato.");
-                } else {
-                    returnType.add(rt.getType());
-                }
-            }
+            procBodyNode += (String) pb.getsList().accept(this);
         }
 
-        return returnType;
+        if(pb.getRe() != null) {
+            ArrayList<String> returnList = new ArrayList<String>();
+            String structInstructions = "";
+            for(Expr e : pb.getRe()) {
+                ArrayList<String> expr =(ArrayList<String>) e.accept(this);
+                if(expr.get(1)!=null){
+                    StructC structC=null;
+                    for(StructC sc: this.structMethod){
+                        if(sc.getNome().equals(expr.get(1) + "_struct")) structC = sc;
+                    }
+                    if(structC != null){
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "Var = " + expr.get(0) + ";\n";
+
+                        for(int i=0; i< structC.getIndex();i++){
+                            returnList.add(structC.getNome()+ "Var" +".var"+i);
+                        }
+                    } else returnList.add(expr.get(0));
+                } else {
+                    returnList.add(expr.get(0));
+                }
+            }
+
+            if (! structInstructions.equals("")) procBodyNode += structInstructions;
+
+            String returnC = "";
+
+            if (returnList.size() == 1) {
+                returnC += "return " + returnList.get(0) + ";";
+            } else {
+                String returnStructInstruction = "";
+                String idProc = this.currentProc.id.getId();
+                StructC structC = null;
+                for(StructC sc: this.structMethod){
+                    if(sc.getNome().equals( idProc + "_struct")) structC = sc;
+                }
+                if(structC != null) {
+                    returnStructInstruction += structC.getNome() + " " + structC.getNome() + "Var;\n";
+                    for(int i=0; i< structC.getIndex();i++){
+                        returnStructInstruction += structC.getNome()+ "Var" +".var"+ i + " = " + returnList.get(i) + ";\n";
+                    }
+                    returnC += returnStructInstruction + "return " + structC.getNome() + "Var;\n";
+                }
+            }
+
+            procBodyNode += returnC;
+        }
+
+        return procBodyNode;
     }
 
     @Override
@@ -633,7 +469,7 @@ public class CGenerator implements Visitor{
             for(int i=0; i< p.getRtList().size() ; i++){
                 struct += p.getRtList().get(i) + " var"+i+";";
             }
-            struct += "}"+p.getId().getId()+";\n";
+            struct += "}"+p.getId().getId()+"_struct;\n";
             this.fileSplitted.set(0,this.fileSplitted.get(0) + struct);
             procNode += p.getId().getId();
             this.structMethod.add(new StructC(p.getId().getId(),p.getRtList().size()));
@@ -656,8 +492,8 @@ public class CGenerator implements Visitor{
 
         procNode += "{\n";
 
-        //TODO PROCBODY
-        ArrayList<String> returnType=(ArrayList<String>) p.getProcBodyOP().accept(this);
+        this.currentProc = p;
+        procNode += (String) p.getProcBodyOP().accept(this);
         procNode += "}\n";
 
         return procNode;
@@ -665,47 +501,26 @@ public class CGenerator implements Visitor{
 
     @Override
     public Object visit(ReadOP c) {
+        String readNode = "scanf(";
         for(Id i:c.getIdList()){
-            if(!this.probe(i.getId(), "var") ) throw new Error("La variabile " + i.getId() +" non è stata dichiarate");
+            //TODO cercare nelle tabelle il tipo
         }
         return true;
     }
 
     @Override
     public Object visit(Stat s) {
-        if(s.getCp() != null){
-            RowTable rt= (RowTable) s.getCp().accept(this);
-            return true;
-        }
+        if(s.getCp() != null) return (String) s.getCp().accept(this)+";\n";
 
-        return false;
+        return null;
     }
 
     @Override
     public Object visit(TimesOP t) {
-        String timesOP;
-        RowTable expr1= (RowTable) t.getE().accept(this);
-        RowTable expr2= (RowTable) t.getE1().accept(this);
+        ArrayList<String> expr1= (ArrayList<String>) t.getE().accept(this);
+        ArrayList<String> expr2= (ArrayList<String>) t.getE1().accept(this);
 
-        String type1="", type2="";
-        if(expr1.getKind() != null && expr1.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-            if(resType.length==1) type1=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando alla moltiplicazione.");
-        } else{
-            type1=expr1.getType();
-        }
-        if(expr2.getKind() != null && expr2.getKind().equals("method")){
-            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-            if(resType.length==1) type2=resType[0];
-            else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come operando alla moltiplicazione.");
-        } else{
-            type2=expr2.getType();
-        }
-        String resultType = this.isCompatibleType("math_operators",type1, type2);
-
-        t.getRt().setType(resultType);
-        return t.getRt();
+        return expr1.get(0) + " * " + expr2.get(0);
     }
 
     @Override
@@ -730,35 +545,77 @@ public class CGenerator implements Visitor{
 
     @Override
     public Object visit(WhileOP c) {
-        if(c.getsList1() != null ) {
-            Object bd=c.getsList1().accept(this);
-        }
-        RowTable rt = (RowTable) c.getE().accept(this);
-        if(rt.getType().equals("bool")){
-            Object bd=c.getsList2().accept(this);
-        }else throw new Error("Il tipo della condizione deve essere boolean");
+        String whileNode = "";
 
-        return true;
+        //TODO vedere uso di while
+        if(c.getsList1() != null ) {
+            whileNode += (String) c.getsList1().accept(this);
+        }
+
+        whileNode += "while (";
+        ArrayList<String> expr = (ArrayList<String>) c.getE().accept(this);
+        whileNode += expr.get(0);
+        whileNode += ") {\n";
+
+        whileNode += (String) c.getsList2().accept(this);
+        whileNode += "}\n";
+
+        return whileNode;
     }
+
 
     @Override
     public Object visit(WriteOP c) {
+        String writeOp = "";
+        ArrayList<String> stringNodes = new ArrayList<String>();
+        ArrayList<String> exprNodes = new ArrayList<String>();
         for(Expr e : c.getExprList()) {
-            RowTable rt= (RowTable) e.accept(this);
-            if(rt.getKind() != null && rt.getKind().equals("method")) {
-                ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
-                if(table !=null) {
-                    for(RowTable row : table) {
-                        if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
+            ArrayList<String> expr= (ArrayList<String>) e.accept(this);
+            if (e instanceof StringConst) {
+                stringNodes.add(expr.get(0));
+            } else {
+                if (expr.get(1) != null ) {
+                    String structInstructions = "";
+                    StructC structC = null;
+                    for(StructC sc: this.structMethod){
+                        if(sc.getNome().equals(expr.get(1)+"_struct")) structC = sc;
                     }
-                    String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
 
-                    if( resType.length == 1 && resType[0].equals("void"))  throw new Error ("Il proc "+ e.getCp().getVal() +" ha come tipo di ritorno void.");
+                    String [] returnType = this.getStringSplitted(e.getRt().getType(), 1);
+                    if (structC != null) {
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "Var = " + expr.get(0) + ";\n";
 
-                } else throw new Error ("Il proc "+ e.getCp().getVal() +" non è stato dichiarato.");
+                        for(int i=0; i< structC.getIndex();i++){
+                            stringNodes.add(this.getTypeInWriteOP(returnType[i]));
+                            exprNodes.add(structC.getNome()+ "Var" +".var"+i);
+                        }
+                    } else {
+                        stringNodes.add(this.getTypeInWriteOP(returnType[0]));
+                        exprNodes.add(expr.get(0));
+                    }
+
+                    if (! structInstructions.equals("")) writeOp += structInstructions;
+                } else {
+                    stringNodes.add(this.getTypeInWriteOP(e.getRt().getType()));
+                    exprNodes.add(expr.get(0));
+                }
+
             }
         }
-        return true;
+        writeOp += "printf(\"";
+        for (String s : stringNodes) {
+            s = s.replaceAll("\"", "");
+            writeOp += s;
+        }
+        writeOp += "\"";
+
+        for (String expr : exprNodes) {
+            writeOp += ", "+ expr;
+        }
+
+        writeOp += ");";
+
+        return writeOp;
     }
 
     @Override
