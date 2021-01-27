@@ -687,7 +687,13 @@ public class SemanticAnalisys implements Visitor{
     @Override
     public Object visit(ReadOP c) {
         for(Id i:c.getIdList()){
-            if(!this.probe(i.getId(), "var") ) throw new Error("La variabile " + i.getId() +" non è stata dichiarate");
+            ArrayList<RowTable> table = this.lookup(i.getId(), "var");
+            if(table !=null) {
+                for(RowTable row : table) {
+                    if(row.getSymbol().equals(i.getId()) && row.getKind().equals("var")) i.setRt(row);
+                }
+
+            } else throw new Error ("La variabile "+ i.getId()+" non è stata dichiarata.");
         }
         return true;
     }

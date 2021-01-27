@@ -25,7 +25,10 @@ public class Tester {
 
 
         SemanticAnalisys sa = new SemanticAnalisys();
-        sa.visit(pOP);
+        ProgramOP astExt = (ProgramOP) sa.visit(pOP);
+
+        CGenerator cg= new CGenerator();
+        cg.visit(astExt);
 
 
 
