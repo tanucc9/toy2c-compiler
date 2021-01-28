@@ -1,4 +1,5 @@
 string nome := "Michele";
+float f := 5.5;
 
 proc multAddDiff ()int, int, int:
 	int primo, secondo, mul, add, diff;

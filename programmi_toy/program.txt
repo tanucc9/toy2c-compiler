@@ -1,13 +1,15 @@
-float primo := 0;
-float secondo := 0;
-int operazione :=0;
+float f := 0;
+float primo := 4.3;
+float secondo := 4.3;
+int ii:= 4.4;
+int operazione := 5;
 
 proc showmenu() void:
     write("Inserisci l'operazione aritmetica da svolgere\n");
-    write("Per l'addizione digita 1");
-    write("Per la sottrazione digita 2");
-    write("Per la moltiplicazione digita 3");
-    write("Per la divisione digita 4");
+    write("Per l'addizione digita 1\n");
+    write("Per la sottrazione digita 2\n");
+    write("Per la moltiplicazione digita 3\n");
+    write("Per la divisione digita 4\n");
     read(operazione);
     ->
 corp;
@@ -21,7 +23,7 @@ proc getValues() void:
 corp;
 
 proc getResult() float:
-    float result:=0;
+    float result:= 4;
     if operazione = 1 then result := primo + secondo;
     elif operazione = 2 then result := primo - secondo;
     elif operazione = 3 then result := primo * secondo;

@@ -10,6 +10,9 @@ public class CGenerator implements Visitor{
     private String procDecl;
     private String structDecl;
     private String procImpl;
+    private int indexWriteStruct;
+    private int indexAssignStruct;
+    private int indexResultStruct;
     private ArrayList<String> fileSplitted;
     private ArrayList<StructC> structMethod;
     private ProcOP currentProc;
@@ -20,6 +23,9 @@ public class CGenerator implements Visitor{
         procDecl="";
         structDecl="";
         procImpl="";
+        indexWriteStruct=0;
+        indexAssignStruct=0;
+        indexResultStruct=0;
         fileSplitted = new ArrayList<String>();
         structMethod= new ArrayList<StructC>();
         this.currentProc = new ProcOP();
@@ -88,10 +94,11 @@ public class CGenerator implements Visitor{
                     if(sc.getNome().equals(expr.get(1)+"_struct")) structC = sc;
                 }
                 if(structC != null){
-                    structInstructions += structC.getNome() + " " + structC.getNome() + "Var = " + expr.get(0) + ";\n";
+                    structInstructions += structC.getNome() + " " + structC.getNome() + "Var" + this.indexAssignStruct + " = " + expr.get(0) + ";\n";
                     for(int i=0; i< structC.getIndex();i++){
-                        exprNode.add(structC.getNome()+"Var.var"+i);
+                        exprNode.add(structC.getNome()+"Var" + this.indexAssignStruct + ".var"+i);
                     }
+                    this.indexAssignStruct++;
                 } else exprNode.add(expr.get(0));
             } else {
                 exprNode.add(expr.get(0));
@@ -110,7 +117,7 @@ public class CGenerator implements Visitor{
     public Object visit(BodyOP b) {
         String bodyOpNode="";
         for(Stat s:b.getStatList()){
-            String stat= (String) s.accept(this);
+            String stat = (String) s.accept(this);
             bodyOpNode += stat;
         }
         return bodyOpNode;
@@ -119,7 +126,6 @@ public class CGenerator implements Visitor{
     @Override
     public Object visit(CallProcOP cp) {
         String callProcNode=cp.getVal()+ " ( ";
-
         if(cp.getElist() != null ) {
             for(Expr e : cp.getElist()) {
                 ArrayList<String> expr = (ArrayList<String>) e.accept(this);
@@ -250,7 +256,7 @@ public class CGenerator implements Visitor{
 
     @Override
     public Object visit(IfOP c) {
-        String ifNode="if (";
+        String ifNode= "if (";
         ArrayList<String> expr= (ArrayList<String>) c.getE().accept(this);
         ifNode += expr.get(0) + ") {\n";
         ifNode += (String) c.getsList().accept(this);
@@ -331,8 +337,9 @@ public class CGenerator implements Visitor{
     @Override
     public Object visit(ParDeclOP p) {
         String parDeclNode="";
+        String type=p.getType().equals("string") ? "char*" : p.getType();
         for(Id id : p.getIdList()) {
-            parDeclNode += p.getType() +" ";
+            parDeclNode += type +" ";
             if(p.getIdList().indexOf(id) == p.getIdList().size()-1) parDeclNode += id.getId();
             else parDeclNode += id.getId() + ", ";
         }
@@ -377,11 +384,12 @@ public class CGenerator implements Visitor{
                         if(sc.getNome().equals(expr.get(1) + "_struct")) structC = sc;
                     }
                     if(structC != null){
-                        structInstructions += structC.getNome() + " " + structC.getNome() + "Var = " + expr.get(0) + ";\n";
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "VarRes" + this.indexResultStruct + " = " + expr.get(0) + ";\n";
 
                         for(int i=0; i< structC.getIndex();i++){
-                            returnList.add(structC.getNome()+ "Var" +".var"+i);
+                            returnList.add(structC.getNome()+ "VarRes" + this.indexResultStruct + ".var"+i);
                         }
+                        this.indexResultStruct++;
                     } else returnList.add(expr.get(0));
                 } else {
                     returnList.add(expr.get(0));
@@ -402,11 +410,11 @@ public class CGenerator implements Visitor{
                     if(sc.getNome().equals( idProc + "_struct")) structC = sc;
                 }
                 if(structC != null) {
-                    returnStructInstruction += structC.getNome() + " " + structC.getNome() + "Var;\n";
+                    returnStructInstruction += structC.getNome() + " " + structC.getNome() + "Return;\n";
                     for(int i=0; i< structC.getIndex();i++){
-                        returnStructInstruction += structC.getNome()+ "Var" +".var"+ i + " = " + returnList.get(i) + ";\n";
+                        returnStructInstruction += structC.getNome()+ "Return" +".var"+ i + " = " + returnList.get(i) + ";\n";
                     }
-                    returnC += returnStructInstruction + "return " + structC.getNome() + "Var;\n";
+                    returnC += returnStructInstruction + "return " + structC.getNome() + "Return;\n";
                 }
             }
 
@@ -477,7 +485,6 @@ public class CGenerator implements Visitor{
     @Override
     public Object visit(Stat s) {
         if(s.getCp() != null) return (String) s.getCp().accept(this)+";\n";
-
         return null;
     }
 
@@ -556,12 +563,13 @@ public class CGenerator implements Visitor{
 
                     String [] returnType = this.getStringSplitted(e.getRt().getType(), 1);
                     if (structC != null) {
-                        structInstructions += structC.getNome() + " " + structC.getNome() + "Var = " + expr.get(0) + ";\n";
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "VarWrite" + this.indexWriteStruct + " = " + expr.get(0) + ";\n";
 
                         for(int i=0; i< structC.getIndex();i++){
                             stringNodes.add(this.getTypeInWR(returnType[i]));
-                            exprNodes.add(structC.getNome()+ "Var" +".var"+i);
+                            exprNodes.add(structC.getNome()+ "VarWrite" + this.indexWriteStruct + ".var"+i);
                         }
+                        this.indexWriteStruct++;
                     } else {
                         stringNodes.add(this.getTypeInWR(returnType[0]));
                         exprNodes.add(expr.get(0));

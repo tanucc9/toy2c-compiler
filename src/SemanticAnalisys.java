@@ -79,6 +79,13 @@ public class SemanticAnalisys implements Visitor{
         return null;
     }
 
+    private boolean isCompatibleVarInitType(String type1, String type2){
+        if((type1.equals("string") && type2.equals("string")) || (type1.equals("bool") && type2.equals("bool"))) return true;
+        if((type1.equals("int") && type2.equals("int")) || (type1.equals("int") && type2.equals("float")) ) return true;
+        if((type1.equals("float") && type2.equals("float")) || (type1.equals("float") && type2.equals("int")) ) return true;
+        return false;
+    }
+
     private String getResultUminusType(String type) {
         if (type.equals("int")) return "int";
         if(type.equals("float")) return "float";
@@ -756,9 +763,10 @@ public class SemanticAnalisys implements Visitor{
                  idList.getRt().setType(c.getType());
                  this.addId(idList.getRt());
              }
-             else if(idList.getRt().getType().equals(c.getType())){
+             else if(this.isCompatibleVarInitType(c.getType(), idList.getRt().getType())){
+                 idList.getRt().setType(c.getType());
                  this.addId(idList.getRt());
-             }else throw new Error("I tipo di "+idList.getRt().getSymbol()+" non è compatibile con "+ idList.getRt().getType());
+             }else throw new Error("Il tipo di "+idList.getRt().getSymbol()+" non è compatibile con "+ idList.getRt().getType());
         }
         return true;
     }

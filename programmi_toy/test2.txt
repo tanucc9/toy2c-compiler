@@ -19,12 +19,28 @@ proc writeNewLines(int n) int:
 	-> 3
 corp;
 
+proc returnIntero(int n) int:
+    -> n
+corp;
+
+proc returnValues(int n; string s) int, string:
+    ->n,s
+corp;
+
+proc printValues(int n; string s)void:
+    write("il numero intero è: ",n, "mentre la stringa è: ", s);
+    ->
+corp;
+
+
 proc main()void :
 	int a, b, c:= -2;
 	float f := 4.4;
 	a, b, c := multAddDiff();
 	if 1 > 0 && 2 < 5 then f:= 5.5; fi;
-	writeNewLines(c);
+	writeNewLines(returnIntero(6));
+	printValues(returnValues(5, "sssss"));
+	write ("il nome è:", nome);
 	write ("il numero float: ", f);
 	write("I risultati sono:", multAddDiff());
 		->
