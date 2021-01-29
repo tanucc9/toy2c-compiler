@@ -48,7 +48,10 @@ proc main()void :
 	int a, b, c:= -2;
 	string strNull := null;
 	string x := "Ciao";
-    string str := x + "hola";
+	string str1 := "str1";
+    string str := x + "hola"+ str1;
+    int n:= 5+4+3;
+    str := x;
 
     concatString("holaaa", " Jhonny");
 	write("Il risultato della funzione bool è: ", boolFunc(true, false, 10));
