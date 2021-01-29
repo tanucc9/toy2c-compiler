@@ -14,8 +14,6 @@ public class CGenerator implements Visitor{
     private int indexAssignStruct;
     private int indexResultStruct;
     private int indexParamCallProcStruct;
-    private int indexConcatString;
-    private String tempConcatString;
     private ArrayList<String> fileSplitted;
     private ArrayList<StructC> structMethod;
     private ProcOP currentProc;
@@ -29,8 +27,6 @@ public class CGenerator implements Visitor{
         indexWriteStruct=0;
         indexAssignStruct=0;
         indexResultStruct=0;
-        indexConcatString=0;
-        tempConcatString="";
         this.indexParamCallProcStruct = 0;
         fileSplitted = new ArrayList<String>();
         structMethod= new ArrayList<StructC>();
@@ -362,45 +358,10 @@ public class CGenerator implements Visitor{
         ArrayList<String> expr1= (ArrayList<String>) p.getE().accept(this);
         ArrayList<String> expr2= (ArrayList<String>) p.getE1().accept(this);
         ArrayList<String> plusNode= new ArrayList<String>();
-        String strcat="";
-        String strcatInstr="";
 
-        if(p.getE().getRt().getType().equals("string") && p.getE1().getRt().getType().equals("string")){
-            if(expr1.get(0).length() >= 7) {
-                strcat = expr1.get(0).substring(0,7);
-                if(strcat.equals("strcat(")){
-                    strcatInstr += expr1.get(0);
-                    strcatInstr += "strcat("+ this.tempConcatString + ", "+ expr2.get(0) + ")\n";
-//                    strcatInstr += "char tempStr" + this.indexConcatString +"[];\n";
-//                    strcatInstr += "strcpy( tempStr"+ this.indexConcatString +", " + this.tempConcatString +");\n";
-//                    this.tempConcatString = "tempStr" + this.indexConcatString ;
-                    this.indexConcatString++;
-                } else {
-                    strcatInstr += "strcat("+ expr1.get(0)+ ", "+ expr2.get(0) + ")\n";
-//                    strcatInstr += "char tempStr" + this.indexConcatString +"[];\n";
-//                    strcatInstr += "strcpy( tempStr"+ this.indexConcatString +", " + expr1.get(0)+");\n";
-                    this.tempConcatString = expr1.get(0);
-//                    this.tempConcatString = "tempStr" + this.indexConcatString ;
-                    this.indexConcatString++;
-                }
-
-            } else {
-                strcatInstr += "strcat("+ expr1.get(0)+ ", "+ expr2.get(0) + ")\n";
-//                strcatInstr += "char tempStr" + this.indexConcatString +"[];\n";
-//                strcatInstr += "strcpy( tempStr"+ this.indexConcatString +", " + expr1.get(0)+");\n";
-//                this.tempConcatString = "tempStr" + this.indexConcatString ;
-                this.tempConcatString = expr1.get(0);
-
-                this.indexConcatString++;
-
-            }
-
-            plusNode.add(strcatInstr);
-        }
-        else plusNode.add(expr1.get(0) + " + " + expr2.get(0));
-
-
+        plusNode.add(expr1.get(0) + " + " + expr2.get(0));
         plusNode.add(null);
+
         return plusNode;
     }
 

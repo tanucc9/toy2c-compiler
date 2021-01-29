@@ -1,0 +1,39 @@
+proc j()float, int:
+    int n, y, z := 0;
+    float zz, yy := 5.3;
+    string s;
+    zz := 5.9;
+    y := 10;
+    n := zz + y;
+    yy := y + zz;
+    s := "ciao";
+
+    write(yy);
+    write(n);
+
+   -> yy,n
+corp;
+
+proc x()void :
+	int x, b, c:= -2;
+	int main;
+	string strNull := null;
+	string eee := "Ciao";
+	string str1 := "str1";
+	int n:= 5+4+3;
+
+		->
+corp;
+
+proc main() void:
+
+  float f;
+  int n;
+
+  f,n := j();
+
+  write(f,n);
+
+->
+corp;
+

@@ -12,10 +12,10 @@ public class SemanticAnalisys implements Visitor{
         this.typeEnvironment.add(table);
     }
 
-    private ArrayList<RowTable> lookup(String symbol, String kind){
+    private ArrayList<RowTable> lookup(String symbol){
         for(int i = this.typeEnvironment.size()-1; i>=0; i--) {
             for(RowTable rowt : this.typeEnvironment.get(i)){
-                if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return this.typeEnvironment.get(i);
+                if(rowt.getSymbol().equals(symbol)) return this.typeEnvironment.get(i);
             }
         }
         return null;
@@ -23,19 +23,20 @@ public class SemanticAnalisys implements Visitor{
 
     private void addId(RowTable rt){
         this.typeEnvironment.get(this.typeEnvironment.size()-1).forEach(rowTable -> {
-            if (rowTable.getSymbol().equals(rt.getSymbol()) && rowTable.getKind().equals(rt.getKind())){
-                if(rt.getKind().equals("var")) throw new Error("La variabile "+ rt.getSymbol() +" è stata già dichiarata.");
-                if(rt.getKind().equals("method")) throw new Error("La funzione "+ rt.getSymbol() +" è stata già dichiarata.");
+            if (rowTable.getSymbol().equals(rt.getSymbol())){
+                throw new Error(rt.getSymbol() +" è stato già dichiarato.");
             }
         });
         this.typeEnvironment.get(this.typeEnvironment.size()-1).add(rt);
     }
+
     private boolean probe(String symbol, String kind){
         for(int i = this.typeEnvironment.size()-1; i>=0; i--) {
               for(RowTable rowt : this.typeEnvironment.get(i)){
                   if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind)) return true;
+                  else if (rowt.getSymbol().equals(symbol) && kind == null) return true;
               }
-            }
+        }
         return false;
     }
     private void exitScope(){
@@ -43,21 +44,16 @@ public class SemanticAnalisys implements Visitor{
     }
 
     private String isCompatibleType(String operazione, String type1, String type2) {
-
+        String res = "";
         switch (operazione) {
             case "plus_operators":
-                if(type1.equals("float") && type2.equals("float")) return "float";
-                if(type1.equals("int") && type2.equals("int")) return "int";
-                if(type1.equals("float") && type2.equals("int")) return "float";
-                if(type1.equals("int") && type2.equals("float")) return "float";
-                if(type1.equals("string") && type2.equals("string")) return "string";
-                throw new Error("Non è possibile effettuare l'addizione tra "+ type1 +" e "+ type2);
+                res = this.numberCompatibility(type1, type2);
+                if(res != null) return res;
+                else throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
             case "math_operators":
-                if(type1.equals("float") && type2.equals("float")) return "float";
-                if(type1.equals("int") && type2.equals("int")) return "int";
-                if(type1.equals("float") && type2.equals("int")) return "float";
-                if(type1.equals("int") && type2.equals("float")) return "float";
-                throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
+                res = this.numberCompatibility(type1, type2);
+                if(res != null) return res;
+                else throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
             case "boolean_operators":
                 if(type1.equals("bool") && type2.equals("bool")) return "bool";
                 else throw new Error("Non è possibile effettuare l'operazione booleana tra "+ type1 +" e "+ type2);
@@ -66,7 +62,7 @@ public class SemanticAnalisys implements Visitor{
                 if(resNot!=null) return resNot;
                 else throw new Error("Non è possibile effettuare l'operazione booleana con "+ type1);
             case "uminus":
-                String res = this.getResultUminusType(type1);
+                res = this.getResultUminusType(type1);
                 if (res != null)  return res;
                 else throw new Error("Non è possibile aggiungere uminus con tipo "+ type1);
             case "relop":
@@ -74,8 +70,20 @@ public class SemanticAnalisys implements Visitor{
                 if(type1.equals("float") && type2.equals("int")) return "bool";
                 if(type1.equals("int") && type2.equals("float")) return "bool";
                 else throw new Error("Non è possibile effettuare confrontare tra "+ type1 +" e "+ type2);
-
+            case "compatible_assign":
+                res = this.numberCompatibility(type1, type2);
+                if(res != null) return res;
+                else throw new Error("I tipi delle espressioni assegnate non corrispondono a quelli attesi.");
         }
+        return null;
+    }
+
+    private String numberCompatibility (String type1, String type2) {
+        if(type1.equals("float") && type2.equals("float")) return "float";
+        if(type1.equals("int") && type2.equals("int")) return "int";
+        if(type1.equals("float") && type2.equals("int")) return "float";
+        if(type1.equals("int") && type2.equals("float")) return "float";
+
         return null;
     }
 
@@ -116,7 +124,7 @@ public class SemanticAnalisys implements Visitor{
         for (ProcOP var: p.getProcList()) {
             boolean acc = ((boolean) var.accept(this));
         }
-        if(!this.probe("main", "method")) throw new Error("Main mancante.");
+        if(!this.probe("main", "method")) throw new Error("Non è stata implementata la funzione 'main'.");
 
         this.exitScope();
 
@@ -153,20 +161,20 @@ public class SemanticAnalisys implements Visitor{
         ArrayList<String> exprType= new ArrayList<String>();
         ArrayList<String> idType= new ArrayList<String>();
         for(Id id : a.getIlist()) {
-            tableId= this.lookup(id.getId(), "var") ;
+            tableId= this.lookup(id.getId()) ;
             if(tableId!=null) {
                 for (RowTable idrt : tableId) {
-                    if (idrt.getSymbol().equals(id.getId()) && idrt.getKind().equals("var")) idType.add(idrt.getType());
+                    if (idrt.getSymbol().equals(id.getId())) idType.add(idrt.getType());
                 }
             }else throw new Error ("La variabile "+ id.getId() +" non è stata dichiarata.");
         }
         for(Expr e : a.getElist()) {
             RowTable rt= (RowTable) e.accept(this);
             if(rt.getKind() != null && rt.getKind().equals("method")) {
-                ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
+                ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
                 if(table !=null) {
                     for(RowTable row : table) {
-                        if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
+                        if(row.getSymbol().equals(e.getCp().getVal())) e.setRt(row);
                     }
                     String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
 
@@ -179,7 +187,14 @@ public class SemanticAnalisys implements Visitor{
             }
         }
         if(exprType.size() != idType.size()) throw new Error("Il numero delle espressioni non corrisponde al numero delle variabili attese.");
-        if (!exprType.equals(idType)) throw new Error(" I tipi delle espressioni assegnate non corrispondono a quelli attesi. ");
+
+        if(!idType.equals(exprType)) {
+            //Fa il controllo nel caso tipi diversi, ma compatibili
+            for (int i = 0; i < idType.size(); i++) {
+                if (this.isCompatibleType("compatible_assign", idType.get(i), exprType.get(i)) == null)
+                    throw new Error(" I tipi delle espressioni assegnate non corrispondono a quelli attesi. ");
+            }
+        }
 
         return true;
     }
@@ -194,10 +209,10 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(CallProcOP cp) {
-        ArrayList<RowTable> tableCp = this.lookup(cp.getVal(), "method");
+        ArrayList<RowTable> tableCp = this.lookup(cp.getVal());
         if(tableCp !=null) {
             for(RowTable row : tableCp) {
-                if(row.getSymbol().equals(cp.getVal()) && row.getKind().equals("method")) cp.setRt(row);
+                if(row.getSymbol().equals(cp.getVal())) cp.setRt(row);
             }
         } else throw new Error ("Il proc "+ cp.getVal() +" non è stato dichiarato.");
 
@@ -206,10 +221,10 @@ public class SemanticAnalisys implements Visitor{
             for(Expr e : cp.getElist()) {
                 RowTable rt = (RowTable) e.accept(this);
                 if(rt.getKind() != null && rt.getKind().equals("method")) {
-                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
+                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
                     if(table !=null) {
                         for(RowTable row : table) {
-                            if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
+                            if(row.getSymbol().equals(e.getCp().getVal())) e.setRt(row);
                         }
                         String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
                         for(String type : resType) {
@@ -366,11 +381,11 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(Id id) {
-        ArrayList<RowTable> table = this.lookup(id.getId(), "var");
+        ArrayList<RowTable> table = this.lookup(id.getId());
         if(table == null) throw new Error("La variabile " + id.getId() +" non è stata dichiarata");
         else {
             for (RowTable rt : table ) {
-                if(rt.getSymbol().equals(id.getId()) && rt.getKind().equals("var")) {
+                if(rt.getSymbol().equals(id.getId())) {
                     id.setRt(rt);
                     return id.getRt();
                 }
@@ -621,10 +636,10 @@ public class SemanticAnalisys implements Visitor{
             for(Expr e : pb.getRe()) {
                 RowTable rt=(RowTable) e.accept(this);
                 if(rt.getKind() != null && rt.getKind().equals("method")) {
-                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
+                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
                     if(table !=null) {
                         for(RowTable row : table) {
-                            if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
+                            if(row.getSymbol().equals(e.getCp().getVal())) e.setRt(row);
                         }
                         String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
                         for (String s: resType ) {
@@ -703,10 +718,10 @@ public class SemanticAnalisys implements Visitor{
     @Override
     public Object visit(ReadOP c) {
         for(Id i:c.getIdList()){
-            ArrayList<RowTable> table = this.lookup(i.getId(), "var");
+            ArrayList<RowTable> table = this.lookup(i.getId());
             if(table !=null) {
                 for(RowTable row : table) {
-                    if(row.getSymbol().equals(i.getId()) && row.getKind().equals("var")) i.setRt(row);
+                    if(row.getSymbol().equals(i.getId())) i.setRt(row);
                 }
 
             } else throw new Error ("La variabile "+ i.getId()+" non è stata dichiarata.");
@@ -795,10 +810,10 @@ public class SemanticAnalisys implements Visitor{
         for(Expr e : c.getExprList()) {
             RowTable rt= (RowTable) e.accept(this);
             if(rt.getKind() != null && rt.getKind().equals("method")) {
-                ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
+                ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
                 if(table !=null) {
                     for(RowTable row : table) {
-                        if(row.getSymbol().equals(e.getCp().getVal()) && row.getKind().equals("method")) e.setRt(row);
+                        if(row.getSymbol().equals(e.getCp().getVal()) ) e.setRt(row);
                     }
                     String[] resType = this.getStringSplitted(e.getRt().getType(), 1);
 

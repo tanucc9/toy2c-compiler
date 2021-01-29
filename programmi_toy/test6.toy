@@ -39,21 +39,13 @@ proc boolFunc(bool b, b2; int n) int:
 	-> res
 corp;
 
-proc concatString(string s, s2) void:
-    write("Il risultato della concatenazione è: ", s + s2);
-	->
-corp;
-
 proc main()void :
 	int a, b, c:= -2;
 	string strNull := null;
 	string x := "Ciao";
 	string str1 := "str1";
-    string str := x + "hola"+ str1;
     int n:= 5+4+3;
-    str := x;
 
-    concatString("holaaa", " Jhonny");
 	write("Il risultato della funzione bool è: ", boolFunc(true, false, 10));
 
     write("Print del primo metodo: ", procMultiplesRes(), "\n Print del secondo metodo: ", procMultiplesRes2() );
