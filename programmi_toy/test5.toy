@@ -1,0 +1,47 @@
+string nome := "Michele";
+float f := 5.5;
+
+proc multAddDiff ()int, int, int:
+	int primo, secondo, mul, add, diff;
+
+	write("Inserire il primo argomento:\n");
+	read(primo);
+	write("Inserire il secondo argomento:\n");
+	read(secondo);
+	mul, add, diff := primo*secondo, primo + secondo, primo - secondo;
+	-> mul, add, diff
+corp;
+
+proc writeNewLines(int n) int:
+	while n > 0 do
+		write("\n");
+		n := n -1;
+	od;
+	-> 3
+corp;
+
+proc boolFunc(bool b) bool:
+    bool res;
+	if !b then
+	    if 5 <> 0 then
+	        res := true;
+	    fi;
+	elif b then
+	    res := false;
+	fi;
+
+	-> res
+corp;
+
+proc main()void :
+	int a, b, c:= -2;
+	a, b, c := multAddDiff();
+	if boolFunc(true) then
+	    write("Sono nell'if!\n" );
+	else write("Sone nell'else \n");
+	fi;
+
+	write("I tuoi valori sono:\n", a, " per la moltiplicazione\n", b,
+		" per la somma, e \n", c, " per la differenza");
+		->
+corp;

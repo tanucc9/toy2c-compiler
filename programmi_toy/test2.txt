@@ -36,12 +36,28 @@ corp;
 proc main()void :
 	int a, b, c:= -2;
 	float f := 4.4;
+	int val := 4.8;
+	int whileVar := 0;
 	a, b, c := multAddDiff();
-	if 1 > 0 && 2 < 5 then f:= 5.5; fi;
+	if 1 > 0 && 2 < 5 then
+	while whileVar := whileVar + 1; -> whileVar <= 10 do
+	if whileVar >= 5 then
+	write("Il valore della variabile while è ", whileVar,"\n");
+	whileVar := whileVar +1;
+	else write("Invece il valore nell'else risulta essere ", whileVar, "\n");
+	whileVar := whileVar +1;
+	fi;
+	od;
+	f:= 5.5;
+	val := 10/5;
+	write(val);
+	fi;
+	val := returnIntero(5);
 	writeNewLines(returnIntero(6));
 	printValues(returnValues(5, "sssss"));
 	write ("il nome è:", nome);
 	write ("il numero float: ", f);
+	write("Il risultato di int è:", val);
 	write("I risultati sono:", multAddDiff());
 		->
 corp;

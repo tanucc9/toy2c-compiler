@@ -1,0 +1,58 @@
+string nome := "Michele";
+float f := 5.5;
+
+proc multAddDiff ()int, int, int:
+	int primo, secondo, mul, add, diff;
+
+	write("Inserire il primo argomento:\n");
+	read(primo);
+	write("Inserire il secondo argomento:\n");
+	read(secondo);
+	mul, add, diff := primo*secondo, primo + secondo, primo - secondo;
+	-> mul, add, diff
+corp;
+
+proc writeNewLines(int n) int:
+	while n > 0 do
+		write("\n");
+		n := n -1;
+	od;
+	-> 3
+corp;
+
+proc procMultiplesRes ()int, int, int:
+	-> writeNewLines(5), 4, writeNewLines(3)
+corp;
+
+proc procMultiplesRes2 ()int, int, int, int, int, int:
+
+	-> procMultiplesRes(), multAddDiff()
+corp;
+
+proc boolFunc(bool b, b2; int n) int:
+    int res;
+	if b || b2 then
+	        res := n;
+	else res := 5;
+	fi;
+
+	-> res
+corp;
+
+proc concatString(string s, s2) void:
+    write("Il risultato della concatenazione è: ", s + s2);
+	->
+corp;
+
+proc main()void :
+	int a, b, c:= -2;
+	string strNull := null;
+	string x := "Ciao";
+    string str := x + "hola";
+
+    concatString("holaaa", " Jhonny");
+	write("Il risultato della funzione bool è: ", boolFunc(true, false, 10));
+
+    write("Print del primo metodo: ", procMultiplesRes(), "\n Print del secondo metodo: ", procMultiplesRes2() );
+		->
+corp;

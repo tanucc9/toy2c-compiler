@@ -13,6 +13,7 @@ public class CGenerator implements Visitor{
     private int indexWriteStruct;
     private int indexAssignStruct;
     private int indexResultStruct;
+    private int indexParamCallProcStruct;
     private ArrayList<String> fileSplitted;
     private ArrayList<StructC> structMethod;
     private ProcOP currentProc;
@@ -26,6 +27,7 @@ public class CGenerator implements Visitor{
         indexWriteStruct=0;
         indexAssignStruct=0;
         indexResultStruct=0;
+        this.indexParamCallProcStruct = 0;
         fileSplitted = new ArrayList<String>();
         structMethod= new ArrayList<StructC>();
         this.currentProc = new ProcOP();
@@ -126,6 +128,7 @@ public class CGenerator implements Visitor{
     @Override
     public Object visit(CallProcOP cp) {
         String callProcNode=cp.getVal()+ " ( ";
+        String structInstructions = "";
         if(cp.getElist() != null ) {
             for(Expr e : cp.getElist()) {
                 ArrayList<String> expr = (ArrayList<String>) e.accept(this);
@@ -135,10 +138,13 @@ public class CGenerator implements Visitor{
                         if(sc.getNome().equals(expr.get(1) + "_struct")) structC = sc;
                     }
                     if(structC != null){
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "ParamCP" + this.indexParamCallProcStruct + " = " + expr.get(0) + ";\n";
+                        callProcNode = structInstructions + callProcNode;
                         for(int i=0; i< structC.getIndex();i++){
-                            callProcNode += structC.getNome()+".var"+i;
+                            callProcNode += structC.getNome() + "ParamCP" + this.indexParamCallProcStruct + ".var"+i;
                             if(i!=structC.getIndex()-1)  callProcNode += ", ";
                         }
+                        this.indexParamCallProcStruct++;
 
                     }else callProcNode += expr.get(0);
                 }else{
@@ -148,6 +154,7 @@ public class CGenerator implements Visitor{
             }
         }
         callProcNode +=")";
+
         return callProcNode;
     }
 
@@ -354,7 +361,7 @@ public class CGenerator implements Visitor{
 
 
         if(p.getE().getRt().getType().equals("string") && p.getE1().getRt().getType().equals("string"))
-            plusNode.add("strcat("+ expr1.get(0)+ ", "+ expr2.get(0) + ");\n");
+            plusNode.add("strcat("+ expr1.get(0)+ ", "+ expr2.get(0) + ")");
         else plusNode.add(expr1.get(0) + " + " + expr2.get(0));
 
 
@@ -435,7 +442,7 @@ public class CGenerator implements Visitor{
             String struct = "typedef struct { \n";
 
             for(int i=0; i< p.getRtList().size() ; i++){
-                if (p.getRtList().get(i).equals("string")) struct += "char " + " var"+i+" [];\n";
+                if (p.getRtList().get(i).equals("string")) struct += "char *" + " var"+i+";\n";
                 else struct += p.getRtList().get(i) + " var"+i+";\n";
             }
             struct += "} "+p.getId().getId()+"_struct;\n";
@@ -633,7 +640,7 @@ public class CGenerator implements Visitor{
     @Override
     public Object visit(Null c) {
         ArrayList<String> nullNode= new ArrayList<String>();
-        nullNode.add("");
+        nullNode.add("\"\"");
         nullNode.add(null);
         return nullNode;
     }

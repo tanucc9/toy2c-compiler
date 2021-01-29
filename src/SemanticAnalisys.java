@@ -407,7 +407,13 @@ public class SemanticAnalisys implements Visitor{
     @Override
     public Object visit(IfOP c) {
         RowTable rt= (RowTable)c.getE().accept(this);
-        if(!rt.getType().equals("bool"))throw new Error("Il tipo della condizione deve essere boolean ");
+        if(rt.getKind() != null && rt.getKind().equals("method")) {
+            String [] resType = this.getStringSplitted(rt.getType(), 1);
+            if(resType.length != 1 || !resType[0].equals("bool")) throw new Error("Il tipo della condizione deve essere boolean ");
+        } else if(!rt.getType().equals("bool"))throw new Error("Il tipo della condizione deve essere boolean ");
+
+
+
         boolean bodyop=(boolean) c.getsList().accept(this);
         boolean accElif= false, accElse= false;
         for(ElifOP elif: c.getElList()){
@@ -825,7 +831,7 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(Null c) {
-        c.getRt().setType(c.getN());
+        c.getRt().setType("string");
         return c.getRt();
     }
 

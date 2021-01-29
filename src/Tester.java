@@ -21,6 +21,7 @@ public class Tester {
         Reader reader = new InputStreamReader(in);
 
         parser p = new parser(new Yylex(reader));
+        //p.debug_parse();
         ProgramOP pOP= (ProgramOP) p.parse().value;
 
 

@@ -1,7 +1,5 @@
-float f := 0;
 float primo := 4.3;
 float secondo := 4.3;
-int ii:= 4.4;
 int operazione := 5;
 
 proc showmenu() void:
