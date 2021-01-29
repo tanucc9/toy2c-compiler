@@ -46,7 +46,6 @@ public class CGenerator implements Visitor{
         } else if (type.equals("string")) {
             return "%s";
         }
-
         return null;
     }
 

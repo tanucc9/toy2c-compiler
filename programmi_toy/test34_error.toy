@@ -1,0 +1,12 @@
+proc divis() int, int:
+->3,4
+corp;
+
+proc divis2() int:
+->4
+corp;
+
+proc main() void:
+if divis2() > divis() then write("olee"); fi;
+->
+corp;

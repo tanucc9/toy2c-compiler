@@ -1,0 +1,9 @@
+proc x() int:
+->3
+corp;
+
+proc main() void:
+int v;
+x:= 4;
+->
+corp;

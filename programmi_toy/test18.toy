@@ -1,0 +1,24 @@
+proc retint() int:
+-> 47
+corp;
+
+proc retfloat() float:
+-> 4.3
+corp;
+
+proc retBool() bool:
+-> true
+corp;
+
+proc retBool2() bool:
+-> true
+corp;
+
+proc main() void:
+float f:= -retfloat();
+int t:= -retint();
+bool b := !retBool();
+if retBool() && retBool2() then write ("eiiiiiiii"); fi;
+write("il numero int è: ", t, "\nil numero float è: ", f, "\nil boolen è: ", b );
+->
+corp;

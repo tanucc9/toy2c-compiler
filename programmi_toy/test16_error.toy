@@ -1,0 +1,10 @@
+proc x() int:
+-> 5
+corp;
+
+proc main() void:
+
+string s;
+s:=x();
+->
+corp;

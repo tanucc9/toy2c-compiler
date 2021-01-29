@@ -1,0 +1,11 @@
+proc x() int, int:
+-> 3, 5
+corp;
+proc x2() bool:
+-> true
+corp;
+
+proc main() void:
+if x2() && x() then write("telefonino"); fi;
+->
+corp;

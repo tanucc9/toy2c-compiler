@@ -1,0 +1,6 @@
+proc main() void:
+int n:=0;
+if 2 > 0 || 5 then n:= 4; fi;
+
+->
+corp;

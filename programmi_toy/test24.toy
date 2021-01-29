@@ -1,0 +1,29 @@
+int x:=5;
+int y:=x;
+
+proc divis() int:
+->3
+corp;
+
+proc divis2() int:
+->4
+corp;
+
+proc main() void:
+int x:= divis() / divis2();
+if divis() = divis2() then write("olee"); fi;
+if divis() >= divis2() then write("olee"); fi;
+if divis() <= divis2() then write("olee"); fi;
+if divis() < divis2() then write("olee"); fi;
+if divis() > divis2() then write("olee"); fi;
+if divis() <> divis2() then write("olee"); fi;
+
+if 5 <> 2 then write("olee"); fi;
+if 5 < 2 then write("olee"); fi;
+if 5 > 2 then write("olee"); fi;
+if 5 <= 2 then write("olee"); fi;
+if 5 >= 2 then write("olee"); fi;
+if 5 = 2 then write("olee"); fi;
+
+->
+corp;

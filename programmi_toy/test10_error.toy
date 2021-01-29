@@ -1,0 +1,4 @@
+proc main()void:
+ x := 5;
+->
+corp;

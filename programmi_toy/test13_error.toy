@@ -1,0 +1,5 @@
+proc main() void:
+int h:=0;
+if !"ciao" then h:=67; fi;
+->
+corp;

@@ -1,0 +1,9 @@
+proc main()void:
+
+if 4 > 3.2  then write("ciao"); fi;
+if 4.3 < 5  then write("ciao"); fi;
+if "ei" <= "stronzo" then write("mi prende per il culo?"); fi;
+if "ei" <= 5 then write("telefonino"); fi;
+
+->
+corp;

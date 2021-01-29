@@ -12,10 +12,11 @@ public class SemanticAnalisys implements Visitor{
         this.typeEnvironment.add(table);
     }
 
-    private ArrayList<RowTable> lookup(String symbol){
+    private ArrayList<RowTable> lookup(String symbol, String kind){
         for(int i = this.typeEnvironment.size()-1; i>=0; i--) {
             for(RowTable rowt : this.typeEnvironment.get(i)){
-                if(rowt.getSymbol().equals(symbol)) return this.typeEnvironment.get(i);
+                if(rowt.getSymbol().equals(symbol) && kind==null)return this.typeEnvironment.get(i);
+                else if(rowt.getSymbol().equals(symbol) && rowt.getKind().equals(kind))return this.typeEnvironment.get(i);
             }
         }
         return null;
@@ -46,10 +47,6 @@ public class SemanticAnalisys implements Visitor{
     private String isCompatibleType(String operazione, String type1, String type2) {
         String res = "";
         switch (operazione) {
-            case "plus_operators":
-                res = this.numberCompatibility(type1, type2);
-                if(res != null) return res;
-                else throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
             case "math_operators":
                 res = this.numberCompatibility(type1, type2);
                 if(res != null) return res;
@@ -95,17 +92,26 @@ public class SemanticAnalisys implements Visitor{
     }
 
     private String getResultUminusType(String type) {
-        if (type.equals("int")) return "int";
-        if(type.equals("float")) return "float";
-        String[] resType = this.getStringSplitted(type, 1);
-        if(resType.length == 1 && ( resType[0].equals("float") || resType[0].equals("int") )) return resType[0];
+        if(type.contains("int") || type.contains("float")){
+            if (type.equals("int")) return "int";
+            else if (type.equals("float")) return "float";
+            else{
+                String[] resType = this.getStringSplitted(type, 1);
+                if(resType.length == 1 && ( resType[0].equals("float") || resType[0].equals("int") )) return resType[0];
+            }
+        }
 
         return null;
     }
     private String getResultNotType(String type) {
-        if (type.equals("bool")) return "bool";
-        String[] resType = this.getStringSplitted(type, 1);
-        if(resType.length == 1 && resType[0].equals("bool") ) return resType[0];
+        if (type.contains("bool")) {
+            if (type.equals("bool")) return "bool";
+            else{
+                String[] resType;
+                resType = this.getStringSplitted(type, 1);
+                if(resType.length == 1 && resType[0].equals("bool") ) return resType[0];
+            }
+        }
 
         return null;
     }
@@ -161,7 +167,7 @@ public class SemanticAnalisys implements Visitor{
         ArrayList<String> exprType= new ArrayList<String>();
         ArrayList<String> idType= new ArrayList<String>();
         for(Id id : a.getIlist()) {
-            tableId= this.lookup(id.getId()) ;
+            tableId= this.lookup(id.getId(), "var") ;
             if(tableId!=null) {
                 for (RowTable idrt : tableId) {
                     if (idrt.getSymbol().equals(id.getId())) idType.add(idrt.getType());
@@ -171,7 +177,7 @@ public class SemanticAnalisys implements Visitor{
         for(Expr e : a.getElist()) {
             RowTable rt= (RowTable) e.accept(this);
             if(rt.getKind() != null && rt.getKind().equals("method")) {
-                ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
+                ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
                 if(table !=null) {
                     for(RowTable row : table) {
                         if(row.getSymbol().equals(e.getCp().getVal())) e.setRt(row);
@@ -191,8 +197,7 @@ public class SemanticAnalisys implements Visitor{
         if(!idType.equals(exprType)) {
             //Fa il controllo nel caso tipi diversi, ma compatibili
             for (int i = 0; i < idType.size(); i++) {
-                if (this.isCompatibleType("compatible_assign", idType.get(i), exprType.get(i)) == null)
-                    throw new Error(" I tipi delle espressioni assegnate non corrispondono a quelli attesi. ");
+               this.isCompatibleType("compatible_assign", idType.get(i), exprType.get(i));
             }
         }
 
@@ -209,19 +214,20 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(CallProcOP cp) {
-        ArrayList<RowTable> tableCp = this.lookup(cp.getVal());
+        ArrayList<RowTable> tableCp = this.lookup(cp.getVal(), "method");
         if(tableCp !=null) {
             for(RowTable row : tableCp) {
-                if(row.getSymbol().equals(cp.getVal())) cp.setRt(row);
+                if(row.getSymbol().equals(cp.getVal()) && row.getKind().equals("method")) cp.setRt(row);
             }
         } else throw new Error ("Il proc "+ cp.getVal() +" non è stato dichiarato.");
+
 
         if(cp.getElist() != null ) {
             ArrayList<String> parType= new ArrayList<String>();
             for(Expr e : cp.getElist()) {
                 RowTable rt = (RowTable) e.accept(this);
                 if(rt.getKind() != null && rt.getKind().equals("method")) {
-                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
+                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
                     if(table !=null) {
                         for(RowTable row : table) {
                             if(row.getSymbol().equals(e.getCp().getVal())) e.setRt(row);
@@ -320,7 +326,6 @@ public class SemanticAnalisys implements Visitor{
             RowTable rt= (RowTable) e.getCp().accept(this);
             return rt;
         }
-
         return null;
     }
 
@@ -339,7 +344,6 @@ public class SemanticAnalisys implements Visitor{
         }
         if(expr2.getKind() != null && expr2.getKind().equals("method")){
             String[] resType = this.getStringSplitted(expr2.getType(), 1);
-
             if(resType.length==1) type2=resType[0];
             else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterEquals.");
         } else{
@@ -359,7 +363,6 @@ public class SemanticAnalisys implements Visitor{
         String type1="", type2="";
         if(expr1.getKind() != null && expr1.getKind().equals("method")){
            String[] resType = this.getStringSplitted(expr1.getType(), 1);
-
             if(resType.length==1 ) type1=resType[0];
             else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterThan.");
         } else{
@@ -367,7 +370,6 @@ public class SemanticAnalisys implements Visitor{
         }
         if(expr2.getKind() != null && expr2.getKind().equals("method")){
            String[] resType = this.getStringSplitted(expr2.getType(), 1);
-
             if(resType.length==1) type2=resType[0];
             else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterThan.");
         } else{
@@ -381,7 +383,7 @@ public class SemanticAnalisys implements Visitor{
 
     @Override
     public Object visit(Id id) {
-        ArrayList<RowTable> table = this.lookup(id.getId());
+        ArrayList<RowTable> table = this.lookup(id.getId(), "var");
         if(table == null) throw new Error("La variabile " + id.getId() +" non è stata dichiarata");
         else {
             for (RowTable rt : table ) {
@@ -449,7 +451,6 @@ public class SemanticAnalisys implements Visitor{
         String type1="", type2="";
         if(expr1.getKind() != null && expr1.getKind().equals("method")){
             String[] resType = this.getStringSplitted(expr1.getType(), 1);
-
             if(resType.length==1 ) type1=resType[0];
             else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al LessEquals.");
         } else{
@@ -616,7 +617,7 @@ public class SemanticAnalisys implements Visitor{
         } else{
             type2=expr2.getType();
         }
-        String resultType = this.isCompatibleType("plus_operators",type1, type2);
+        String resultType = this.isCompatibleType("math_operators",type1, type2);
 
         p.getRt().setType(resultType);
         return p.getRt();
@@ -636,7 +637,7 @@ public class SemanticAnalisys implements Visitor{
             for(Expr e : pb.getRe()) {
                 RowTable rt=(RowTable) e.accept(this);
                 if(rt.getKind() != null && rt.getKind().equals("method")) {
-                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
+                    ArrayList<RowTable> table = this.lookup(e.getCp().getVal(), "method");
                     if(table !=null) {
                         for(RowTable row : table) {
                             if(row.getSymbol().equals(e.getCp().getVal())) e.setRt(row);
@@ -718,7 +719,7 @@ public class SemanticAnalisys implements Visitor{
     @Override
     public Object visit(ReadOP c) {
         for(Id i:c.getIdList()){
-            ArrayList<RowTable> table = this.lookup(i.getId());
+            ArrayList<RowTable> table = this.lookup(i.getId(), "var");
             if(table !=null) {
                 for(RowTable row : table) {
                     if(row.getSymbol().equals(i.getId())) i.setRt(row);
@@ -810,7 +811,7 @@ public class SemanticAnalisys implements Visitor{
         for(Expr e : c.getExprList()) {
             RowTable rt= (RowTable) e.accept(this);
             if(rt.getKind() != null && rt.getKind().equals("method")) {
-                ArrayList<RowTable> table = this.lookup(e.getCp().getVal());
+                ArrayList<RowTable> table = this.lookup(e.getCp().getVal(),"method");
                 if(table !=null) {
                     for(RowTable row : table) {
                         if(row.getSymbol().equals(e.getCp().getVal()) ) e.setRt(row);
