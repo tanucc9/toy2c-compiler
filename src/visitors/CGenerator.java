@@ -48,12 +48,14 @@ public class CGenerator implements Visitor {
         return type.split("->")[index].split(",");
     }
 
-    private String getTypeInWR (String type) {
+    private String getTypeInWR (String type, String op) {
         if (type.equals("int") || type.equals("bool")) {
             return "%d";
         } else if (type.equals("float")) {
             return "%f";
-        } else if (type.equals("string")) {
+        } else if (type.equals("string") && op.equals("read")) {
+            return " %[^\\n]s";
+        } else if (type.equals("string") && op.equals("write")) {
             return "%s";
         }
         return null;
@@ -264,7 +266,7 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(IdListInitOP x) {
-        String idListInitNode = x.getId().getId();
+        String idListInitNode = this.typeVarDecl.equals("string") ? "*" + x.getId().getId() : x.getId().getId();
         if(x.getExpr() != null) {
             ArrayList<String> expr = (ArrayList<String>) x.getExpr().accept(this);
             if (this.isGlobalVar && x.getExpr() instanceof Id) {
@@ -489,17 +491,31 @@ public class CGenerator implements Visitor {
         return procNode;
     }
 
+    /*
+    char s1[100];
+    scanf("%s", s1);
+    s = s1;
+    */
     @Override
     public Object visit(ReadOP c) {
-        String readNode = "scanf(\"";
         String idlist ="";
-        for(Id i:c.getIdList()){
-            readNode += this.getTypeInWR(i.getRt().getType());
-            idlist += ", &" + i.getId();
+        String charInstrBefore = "";
+        String charInstrAfter = "";
+        String readNode = "";
 
+        for(Id i:c.getIdList()){
+            readNode += "scanf(\"" + this.getTypeInWR(i.getRt().getType(), "read");
+            if(i.getRt().getType().equals("string")) {
+                charInstrBefore += "char " + i.getId() +"_tempVarReadString[100];\n";
+                idlist = ", " + i.getId() + "_tempVarReadString";
+                charInstrAfter += i.getId() + " = " + i.getId() + "_tempVarReadString;\n";
+            } else idlist = ", &" + i.getId();
+            readNode += "\"" + idlist;
+            readNode += ");\n";
         }
-        readNode += "\"" + idlist;
-        readNode += ");\n";
+
+        readNode = charInstrBefore + readNode + charInstrAfter;
+
         return readNode;
     }
 
@@ -533,7 +549,7 @@ public class CGenerator implements Visitor {
     @Override
     public Object visit(VarDeclOP c) {
 
-        String varDeclNode = c.getType().equals("string") ? "char * " : c.getType() + " ";
+        String varDeclNode = c.getType().equals("string") ? "char " : c.getType() + " ";
         this.typeVarDecl=c.getType();
         for(IdListInitOP idList : c.getIdListInit()) {
             varDeclNode += (String) idList.accept(this);
@@ -586,18 +602,18 @@ public class CGenerator implements Visitor {
                         structInstructions += structC.getNome() + " " + structC.getNome() + "VarWrite" + this.indexWriteStruct + " = " + expr.get(0) + ";\n";
 
                         for(int i=0; i< structC.getIndex();i++){
-                            stringNodes.add(this.getTypeInWR(returnType[i]));
+                            stringNodes.add(this.getTypeInWR(returnType[i], "write"));
                             exprNodes.add(structC.getNome()+ "VarWrite" + this.indexWriteStruct + ".var"+i);
                         }
                         this.indexWriteStruct++;
                     } else {
-                        stringNodes.add(this.getTypeInWR(returnType[0]));
+                        stringNodes.add(this.getTypeInWR(returnType[0], "write"));
                         exprNodes.add(expr.get(0));
                     }
 
                     if (! structInstructions.equals("")) writeOp += structInstructions;
                 } else {
-                    stringNodes.add(this.getTypeInWR(e.getRt().getType()));
+                    stringNodes.add(this.getTypeInWR(e.getRt().getType(), "write"));
                     exprNodes.add(expr.get(0));
                 }
 
