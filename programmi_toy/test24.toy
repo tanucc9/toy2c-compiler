@@ -1,6 +1,8 @@
 int x:=5;
 int y:=x+5;
 float z, zz, zzz := 77.77777;
+string sss, kkk := "ciao";
+string k2 := kkk;
 
 proc boolProc() bool:
     write("il valore della x globale: ", x, "\n");
@@ -26,6 +28,15 @@ corp;
 proc main() void:
 int x:= divis() / divis2();
 int res1, res2, res3 := divis();
+string s2 := "vediamo un po";
+sss := "ueeeeeeeeee";
+
+write("s2 è: ", s2, "\nmentre sss è: ", sss, "\n" );
+
+write("kkk è: ", kkk, "\nmentre k2 è: ", k2, "\n" );
+
+sss, s2, res2:=  "ei","stronz",1;
+write("s2 è: ", s2, "\nmentre sss è: ", sss, "\nres2", res2, "\n" );
 
 res1 := divis() - divis2();
 res1 := divis() * divis2();

@@ -15,6 +15,7 @@ public class CGenerator implements Visitor {
     private String procDecl;
     private String structDecl;
     private String procImpl;
+    private String typeVarDecl;
     private int indexWriteStruct;
     private int indexAssignStruct;
     private int indexResultStruct;
@@ -30,6 +31,7 @@ public class CGenerator implements Visitor {
         procDecl="";
         structDecl="";
         procImpl="";
+        this.typeVarDecl="";
         indexWriteStruct=0;
         indexAssignStruct=0;
         indexResultStruct=0;
@@ -95,7 +97,7 @@ public class CGenerator implements Visitor {
         ArrayList<String> idNode= new ArrayList<String>();
         String structInstructions = "";
         for(Id id : a.getIlist()) {
-            idNode.add(id.getId()+" = ");
+                idNode.add(id.getId()+" = ");
         }
         for(Expr e : a.getElist()) {
             ArrayList<String> expr= (ArrayList<String>) e.accept(this);
@@ -262,13 +264,11 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(IdListInitOP x) {
-
-        //[] vengono sempre aggiunte ma poi rimosse nel vardeclop, se necessario.
-        String idListInitNode = x.getId().getId() + "[]";
+        String idListInitNode = x.getId().getId();
         if(x.getExpr() != null) {
             ArrayList<String> expr = (ArrayList<String>) x.getExpr().accept(this);
-            if (this.isGlobalVar) {
-                this.globalAssignVar += x.getId().getId() + " = " + expr.get(0) +";\n";
+            if (this.isGlobalVar && x.getExpr() instanceof Id) {
+                 this.globalAssignVar += x.getId().getId() + " = " + expr.get(0) +";\n";
             } else {
                 idListInitNode += " = ";
                 idListInitNode += expr.get(0);
@@ -533,11 +533,10 @@ public class CGenerator implements Visitor {
     @Override
     public Object visit(VarDeclOP c) {
 
-        String varDeclNode = c.getType().equals("string") ? "char " : c.getType() + " ";
-
+        String varDeclNode = c.getType().equals("string") ? "char * " : c.getType() + " ";
+        this.typeVarDecl=c.getType();
         for(IdListInitOP idList : c.getIdListInit()) {
             varDeclNode += (String) idList.accept(this);
-            if( ! c.getType().equals("string")) varDeclNode = varDeclNode.replace("[]", "");
             if(c.getIdListInit().indexOf(idList)==c.getIdListInit().size()-1) varDeclNode += ";\n";
             else varDeclNode += ", ";
         }

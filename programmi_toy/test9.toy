@@ -1,13 +1,14 @@
+string l, ll, lll;
 proc j()float, int:
     int n, y, z := 0;
     float zz, yy := 5.3;
-    string s;
+    string s,s2,s3;
     zz := 5.9;
     y := 10;
     n := zz + y;
     yy := y + zz;
     s := "ciao";
-
+    write(s);
     write(yy);
     write(n);
 
@@ -29,7 +30,8 @@ proc main() void:
 
   float f;
   int n;
-
+  l,ll,lll := "l1","l2","l3";
+  write(l, ll, lll, "\n");
   f,n := j();
 
   write(f,n);
