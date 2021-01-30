@@ -269,7 +269,7 @@ public class CGenerator implements Visitor {
         String idListInitNode = this.typeVarDecl.equals("string") ? "*" + x.getId().getId() : x.getId().getId();
         if(x.getExpr() != null) {
             ArrayList<String> expr = (ArrayList<String>) x.getExpr().accept(this);
-            if (this.isGlobalVar && x.getExpr() instanceof Id) {
+            if (this.isGlobalVar) {
                  this.globalAssignVar += x.getId().getId() + " = " + expr.get(0) +";\n";
             } else {
                 idListInitNode += " = ";

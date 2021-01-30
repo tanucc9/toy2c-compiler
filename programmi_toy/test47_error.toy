@@ -17,6 +17,10 @@ proc divis2() int:
 ->4
 corp;
 
+proc zzz() int:
+->4
+corp;
+
 proc main() void:
 
     if 5 < 3 || true then x := 3; fi;
