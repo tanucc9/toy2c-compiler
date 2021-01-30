@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Configurazione5" type="Application" factoryName="Application" singleton="false">
+  <configuration default="false" name="Configurazione44" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="Tester" />
     <module name="mauro-avolicino_es5_scg" />
-    <option name="PROGRAM_PARAMETERS" value="programmi_toy/test5.toy" />
+    <option name="PROGRAM_PARAMETERS" value="programmi_toy/test44_error.toy" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

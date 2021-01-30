@@ -1,0 +1,25 @@
+int x:=5;
+int y:=x;
+
+proc boolProc() bool, bool:
+->true, false
+corp;
+
+proc boolProc2() bool, int:
+->false, 55
+corp;
+
+proc divis() int, float:
+->3, 4.5
+corp;
+
+proc divis2() int:
+->4
+corp;
+
+proc main() void:
+
+    if boolProc() || 5 < 3 then x := 3; fi;
+
+->
+corp;

@@ -1,0 +1,27 @@
+int x:=5;
+int y:=x;
+
+proc boolProc() bool:
+->true
+corp;
+
+proc boolProc2() bool:
+->false
+corp;
+
+proc divis() int, float:
+->3, 4.5
+corp;
+
+proc divis2() int:
+->4
+corp;
+
+proc main() void:
+
+int res1, res2, res3 := divis2();
+
+res1 := divis() - divis2();
+
+->
+corp;
