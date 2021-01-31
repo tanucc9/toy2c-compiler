@@ -25,6 +25,7 @@ string s1:=s;
 corp;
 
 proc retMul(string s; int i) string, int, string:
+main();
 -> s, i, "top"
 corp;
 

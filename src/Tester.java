@@ -23,21 +23,21 @@ public class Tester {
         CGenerator cg= new CGenerator();
         String fileC = (String) cg.visit(astExt);
 
-        String fileOutDir = System.getProperty("user.dir") + "/" + args[1];
-        File f = new File(fileOutDir);
-        if(!f.exists()) {
-            if (f.createNewFile()) {
-                FileWriter fw = new FileWriter(fileOutDir);
-                fw.write(fileC);
-                fw.close();
-            } else {
-                throw new Error("Errore sulla generazione del file intermedio.");
-            }
-
-        } else {
-            FileWriter fw = new FileWriter(fileOutDir);
-            fw.write(fileC);
-            fw.close();
-        }
-    }
+//        String fileOutDir = System.getProperty("user.dir") + "/" + args[1];
+//        File f = new File(fileOutDir);
+//        if(!f.exists()) {
+//            if (f.createNewFile()) {
+//                FileWriter fw = new FileWriter(fileOutDir);
+//                fw.write(fileC);
+//                fw.close();
+//            } else {
+//                throw new Error("Errore sulla generazione del file intermedio.");
+//            }
+//
+//        } else {
+//            FileWriter fw = new FileWriter(fileOutDir);
+//            fw.write(fileC);
+//            fw.close();
+//        }
+   }
 }

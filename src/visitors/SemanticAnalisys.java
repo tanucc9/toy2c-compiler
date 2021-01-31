@@ -1,6 +1,8 @@
 package visitors;
 
 import java.util.ArrayList;
+
+import com.sun.rowset.internal.Row;
 import nodes.*;
 import models.*;
 
@@ -46,6 +48,26 @@ public class SemanticAnalisys implements Visitor {
     }
     private void exitScope(){
         this.typeEnvironment.remove(this.typeEnvironment.size()-1);
+    }
+
+    private void validateMain(String callProc){
+        if(callProc!=null && callProc.equals("main")) throw new Error("Il main non può essere invocato all'interno di altre funzioni.");
+        if(callProc==null) {
+            ArrayList<RowTable> table = this.lookup("main", "method");
+            RowTable rt = new RowTable();
+            if (table != null) {
+                for (RowTable row : table) {
+                    if (row.getSymbol().equals("main")) rt = row;
+                }
+                String[] parType = this.getStringSplitted(rt.getType(), 0);
+                if (parType.length > 1 || (parType.length == 1 && !parType[0].equals(""))) throw new Error("Non è possibile passare parametri alla funzione main.");
+
+                String[] resType = this.getStringSplitted(rt.getType(), 1);
+                if (resType.length > 1 || !resType[0].equals("void"))
+                    throw new Error("Il tipo di ritorno del main deve essere void.");
+
+            } else throw new Error("Non è stata implementata la funzione 'main'.");
+        }
     }
 
     private String isCompatibleType(String operazione, String type1, String type2) {
@@ -134,7 +156,9 @@ public class SemanticAnalisys implements Visitor {
         for (ProcOP var: p.getProcList()) {
             boolean acc = ((boolean) var.accept(this));
         }
-        if(!this.probe("main", "method")) throw new Error("Non è stata implementata la funzione 'main'.");
+        this.validateMain(null);
+
+
 
         this.exitScope();
 
@@ -221,6 +245,7 @@ public class SemanticAnalisys implements Visitor {
 
     @Override
     public Object visit(CallProcOP cp) {
+        this.validateMain(cp.getVal());
         ArrayList<RowTable> tableCp = this.lookup(cp.getVal(), "method");
         if(tableCp !=null) {
             for(RowTable row : tableCp) {

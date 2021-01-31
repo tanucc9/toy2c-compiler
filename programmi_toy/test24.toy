@@ -26,8 +26,7 @@ proc divis2() int:
 ->4
 corp;
 
-proc main(int i) void:
-int ii := i;
+proc main() void:
 int x:= divis() / divis2();
 int res1, res2, res3 := divis();
 string s2 := "vediamo un po";

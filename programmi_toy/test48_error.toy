@@ -1,0 +1,9 @@
+proc x() void:
+main();
+->
+corp;
+
+proc main() void:
+
+->
+corp;

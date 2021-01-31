@@ -440,6 +440,8 @@ public class CGenerator implements Visitor {
             }
 
             procBodyNode += returnC;
+        }else {
+            if(this.currentProc.getId().getId().equals("main")) procBodyNode += "return 0;\n";
         }
 
         return procBodyNode;
@@ -450,6 +452,7 @@ public class CGenerator implements Visitor {
         String procNode="";
         if(p.getRtList().size()==1){
             if(p.getRtList().get(0).equals("string")) procNode += "char *";
+            else if(p.getId().getId().equals("main")) procNode += "int";
             else procNode += p.getRtList().get(0);
 
         }else{
