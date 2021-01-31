@@ -79,7 +79,7 @@ public class CGenerator implements Visitor {
         }
 
         this.fileC += "\n" + structDecl + "\n" + procDecl + "\n" + procImpl;
-        System.out.println(this.fileC);
+        //System.out.println(this.fileC);
         return this.fileC;
     }
 
@@ -494,11 +494,6 @@ public class CGenerator implements Visitor {
         return procNode;
     }
 
-    /*
-    char s1[100];
-    scanf("%s", s1);
-    s = s1;
-    */
     @Override
     public Object visit(ReadOP c) {
         String idlist ="";
