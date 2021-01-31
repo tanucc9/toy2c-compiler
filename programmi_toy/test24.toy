@@ -10,7 +10,8 @@ proc boolProc() bool:
 ->false
 corp;
 
-proc boolProc2() bool:
+proc boolProc2(string s) bool:
+    string s1 := s;
     write("il valore della zzz globale: ", zzz, "\n");
 ->true
 corp;
@@ -25,7 +26,8 @@ proc divis2() int:
 ->4
 corp;
 
-proc main() void:
+proc main(int i) void:
+int ii := i;
 int x:= divis() / divis2();
 int res1, res2, res3 := divis();
 string s2 := "vediamo un po";
@@ -42,7 +44,7 @@ res1 := divis() - divis2();
 res1 := divis() * divis2();
 res1 := divis() + divis2();
 
-if boolProc() || boolProc2() then res1 := 0; fi;
+if boolProc() || boolProc2(kkk) then res1 := 0; fi;
 
 if divis() = divis2() then write("olee"); fi;
 if divis() >= divis2() then write("olee"); fi;

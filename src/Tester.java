@@ -21,19 +21,23 @@ public class Tester {
         ProgramOP astExt = (ProgramOP) sa.visit(pOP);
 
         CGenerator cg= new CGenerator();
-        cg.visit(astExt);
+        String fileC = (String) cg.visit(astExt);
 
+        String fileOutDir = System.getProperty("user.dir") + "/" + args[1];
+        File f = new File(fileOutDir);
+        if(!f.exists()) {
+            if (f.createNewFile()) {
+                FileWriter fw = new FileWriter(fileOutDir);
+                fw.write(fileC);
+                fw.close();
+            } else {
+                throw new Error("Errore sulla generazione del file intermedio.");
+            }
 
-
-       /* GenerateXML xml = new GenerateXML();
-        Document xml_generated = (Document)pOP.accept(xml);
-
-
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        DOMSource domSource = new DOMSource(xml_generated);
-        StreamResult streamResult = new StreamResult(new File(System.getProperty("user.dir")+"\\albero_sintattico.xml"));
-
-        transformer.transform(domSource, streamResult);*/
+        } else {
+            FileWriter fw = new FileWriter(fileOutDir);
+            fw.write(fileC);
+            fw.close();
+        }
     }
 }
