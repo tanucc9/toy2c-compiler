@@ -1,6 +1,7 @@
 package visitors;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 
 import nodes.*;
@@ -94,6 +95,10 @@ public class SemanticAnalisys implements Visitor {
                 if(type1.equals("int") && type2.equals("float")) return "bool";
                 else throw new Error("Non è possibile effettuare confrontare tra "+ type1 +" e "+ type2);
             case "compatible_assign":
+                if (type1.equals("string") || type2.equals("string"))
+                    return "string";
+                if (type1.equals("bool") || type2.equals("bool"))
+                    return "bool";
                 res = this.numberCompatibility(type1, type2);
                 if(res != null) return res;
                 else throw new Error("I tipi delle espressioni assegnate non corrispondono a quelli attesi.");
@@ -143,7 +148,6 @@ public class SemanticAnalisys implements Visitor {
     }
 
     private String[] getStringSplitted(String type, int index){
-        String[] x= type.split("->");
         return type.split("->")[index].split(",");
     }
 
@@ -281,9 +285,32 @@ public class SemanticAnalisys implements Visitor {
                 parTypeCpList.add(s);
             }
 
+            //Controllo se il numero dei parametri è uguale, altrimenti già posso lanciare errore
             if(parType.size() != parTypeCpList.size()) throw new Error("Il numero dei parametri passati al proc "+ cp.getVal() +" non corrisponde al numero dei parametri attesi.");
-            if (!parType.equals(parTypeCpList)) throw new Error(" I tipi dei parametri passati al proc "+ cp.getVal() +" non corrispondono a quelli attesi. ");
 
+            /* Iterator, dopo aver controllato il numero dei parametri, controllo se
+            * ogni parametro passato, è compatibile con quello che si aspetta di ricevere
+            * la funzione.
+            * Per compatibile si intende che possono essere accettati anche int -> float
+            * o float -> int. */
+            Iterator<String> actualParamTypes = parType.iterator();
+            Iterator<String> formalParamTypes = parTypeCpList.iterator();
+            while (formalParamTypes.hasNext()) {
+                // TODO: ...
+                String formalParamType = formalParamTypes.next();
+                String actualParamType = actualParamTypes.next();
+                try {
+                    isCompatibleType("compatible_assign", actualParamType, formalParamType);
+                } catch (Error e) {
+                    throw new Error(" I tipi dei parametri passati al proc " + cp.getVal() + " non corrispondono a quelli attesi. ");
+                }
+            }
+        }
+        //Controllo nell'else se è corretto che la callproc non abbia parametri passati.
+        else {
+            String parType[] = this.getStringSplitted(cp.getRt().getType(), 0);
+            if(parType.length > 1 || !parType[0].equals("") )
+                throw new Error("Il numero dei parametri passati al proc "+ cp.getVal() +" non corrisponde al numero dei parametri attesi.");
         }
         return cp.getRt();
     }
@@ -317,6 +344,7 @@ public class SemanticAnalisys implements Visitor {
     @Override
     public Object visit(ElifOP c) {
         RowTable rt= (RowTable) c.getE().accept(this);
+        // TODO: "int,int,->bool," not equals "bool" test14.toy@15
         if(!rt.getType().equals("bool"))throw new Error("La condizione deve essere di tipo boolean");
         return (boolean) c.getsList().accept(this);
     }

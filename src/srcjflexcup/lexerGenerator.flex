@@ -75,7 +75,7 @@ TraditionalComment = "/*" [^*] ~"*/" | "/*" "*"+ "/"
   "void" {return generateToken(sym.VOID);}
   "do" {return generateToken(sym.DO);}
   "od" {return generateToken(sym.OD);}
-  "read" {return generateToken(sym.READ);}
+  "readln" {return generateToken(sym.READ);}
   "write" {return generateToken(sym.WRITE);}
   "true" {return generateToken(sym.TRUE); }
   "false" {return generateToken(sym.FALSE); }

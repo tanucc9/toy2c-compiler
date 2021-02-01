@@ -6,6 +6,8 @@ import models.*;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CGenerator implements Visitor {
 
@@ -24,6 +26,7 @@ public class CGenerator implements Visitor {
     private ArrayList<StructC> structMethod;
     private ProcOP currentProc;
     private boolean isGlobalVar;
+    private int countElifOP;
 
     public CGenerator () {
         this.typeEnvironment = new ArrayList<ArrayList<RowTable>>();
@@ -41,6 +44,7 @@ public class CGenerator implements Visitor {
         this.currentProc = new ProcOP();
         this.isGlobalVar = false;
         this.globalAssignVar = "";
+        this.countElifOP = 0;
     }
 
     private String[] getStringSplitted(String type, int index){
@@ -85,11 +89,17 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(AndOP a) {
-        ArrayList<String> expr1= (ArrayList<String>) a.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) a.getE1().accept(this);
-        ArrayList<String> andNode= new ArrayList<String>();
-        andNode.add(expr1.get(0) + " && " + expr2.get(0));
-        andNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) a.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) a.getE1().accept(this);
+        Map<String, String> andNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        andNode.put("code", expr1.get("code") + " && " + expr2.get("code"));
+        if( ! structInstructions.equals("")) andNode.put("serviceInstr", structInstructions);
+       // andNode.add(null);
         return andNode;
     }
 
@@ -99,25 +109,25 @@ public class CGenerator implements Visitor {
         ArrayList<String> idNode= new ArrayList<String>();
         String structInstructions = "";
         for(Id id : a.getIlist()) {
-                idNode.add(id.getId()+" = ");
+            idNode.add(id.getId()+" = ");
         }
         for(Expr e : a.getElist()) {
-            ArrayList<String> expr= (ArrayList<String>) e.accept(this);
-
-            if(expr.get(1) != null){
+            Map<String, String> expr= (Map<String, String>) e.accept(this);
+            if (expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+            if(expr.containsKey("idProc")){
                 StructC structC = null;
                 for(StructC sc: this.structMethod){
-                    if(sc.getNome().equals(expr.get(1)+"_struct")) structC = sc;
+                    if(sc.getNome().equals(expr.get("idProc")+"_struct")) structC = sc;
                 }
                 if(structC != null){
-                    structInstructions += structC.getNome() + " " + structC.getNome() + "Var" + this.indexAssignStruct + " = " + expr.get(0) + ";\n";
+                    structInstructions += structC.getNome() + " " + structC.getNome() + "Var" + this.indexAssignStruct + " = " + expr.get("code") + ";\n";
                     for(int i=0; i< structC.getIndex();i++){
                         exprNode.add(structC.getNome()+"Var" + this.indexAssignStruct + ".var"+i);
                     }
                     this.indexAssignStruct++;
-                } else exprNode.add(expr.get(0));
+                } else exprNode.add(expr.get("code"));
             } else {
-                exprNode.add(expr.get(0));
+                exprNode.add(expr.get("code"));
             }
         }
 
@@ -145,50 +155,68 @@ public class CGenerator implements Visitor {
         String structInstructions = "";
         if(cp.getElist() != null ) {
             for(Expr e : cp.getElist()) {
-                ArrayList<String> expr = (ArrayList<String>) e.accept(this);
-                if(expr.get(1)!=null){
+                Map<String, String> expr = (Map<String, String>) e.accept(this);
+                if(expr.containsKey("serviceInstr")) structInstructions = expr.get("serviceInstr");
+                if(expr.containsKey("idProc")){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
-                        if(sc.getNome().equals(expr.get(1) + "_struct")) structC = sc;
+                        if(sc.getNome().equals(expr.get("idProc") + "_struct")) structC = sc;
                     }
                     if(structC != null){
-                        structInstructions += structC.getNome() + " " + structC.getNome() + "ParamCP" + this.indexParamCallProcStruct + " = " + expr.get(0) + ";\n";
-                        callProcNode = structInstructions + callProcNode;
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "ParamCP" + this.indexParamCallProcStruct + " = " + expr.get("code") + ";\n";
+
                         for(int i=0; i< structC.getIndex();i++){
                             callProcNode += structC.getNome() + "ParamCP" + this.indexParamCallProcStruct + ".var"+i;
                             if(i!=structC.getIndex()-1)  callProcNode += ", ";
                         }
                         this.indexParamCallProcStruct++;
 
-                    }else callProcNode += expr.get(0);
+                    }else callProcNode += expr.get("code");
                 }else{
-                    callProcNode += expr.get(0);
+                    callProcNode += expr.get("code");
                 }
                 if(cp.getElist().size()-1 != cp.getElist().indexOf(e)) callProcNode += ", ";
             }
         }
         callProcNode +=")";
 
-        return callProcNode;
+        ArrayList<String> resultCallProc = new ArrayList<String>();
+        resultCallProc.add(callProcNode);
+        if (! structInstructions.equals("")) resultCallProc.add(structInstructions);
+
+        return resultCallProc;
     }
 
     @Override
     public Object visit(DivOP d) {
-        ArrayList<String> expr1= (ArrayList<String>) d.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) d.getE1().accept(this);
-        ArrayList<String> divNode= new ArrayList<String>();
-        divNode.add(expr1.get(0) + " / " + expr2.get(0));
-        divNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) d.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) d.getE1().accept(this);
+        Map<String, String> divNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        divNode.put("code", expr1.get("code") + " / " + expr2.get("code"));
+        if ( ! structInstructions.equals("")) divNode.put("serviceInstr", structInstructions);
+        // divNode.add(null);
 
         return divNode;
     }
 
     @Override
     public Object visit(ElifOP c) {
-        String elifNode = "else if (";
-        ArrayList<String> expr= (ArrayList<String>) c.getE().accept(this);
 
-        elifNode += expr.get(0);
+        /* Dato che non vengono chiuse le parentesi } dell'elif (dell'else), viene incrementato
+        * un contatore di parentesi da chiudere, che verranno poi aggiunte nell'if, alla fine di tutto,
+        * decrementando di uno per ogni parentesi messa. */
+        this.countElifOP ++;
+
+        String elifNode = "else {\n";
+        Map<String, String> expr= (Map<String, String>) c.getE().accept(this);
+        if(expr.containsKey("serviceInstr")) elifNode += expr.get("serviceInstr");
+        elifNode += "if (";
+        elifNode += expr.get("code");
         elifNode += ") {\n";
 
         elifNode += (String) c.getsList().accept(this);
@@ -208,23 +236,32 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(EqualsOP eq) {
-        ArrayList<String> expr1= (ArrayList<String>) eq.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) eq.getE1().accept(this);
-        ArrayList<String> eqNode= new ArrayList<String>();
-        eqNode.add(expr1.get(0) + " == " + expr2.get(0));
-        eqNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) eq.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) eq.getE1().accept(this);
+        Map<String, String> eqNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+
+        eqNode.put("code", expr1.get("code") + " == " + expr2.get("code"));
+        if( ! structInstructions.equals("")) eqNode.put("serviceInstr", structInstructions);
+        //eqNode.add(null);
         return eqNode;
     }
 
     @Override
     public Object visit(Expr e) {
-        ArrayList<String> exprNode = new ArrayList<String>();
-        String[] callProcSplitted;
+        Map<String, String> exprNode = new HashMap<String, String>();
+        //String[] callProcSplitted;
         if(e.getCp() != null){
-            String callProcNode= (String) e.getCp().accept(this);
-            callProcSplitted=callProcNode.split(" ");
-            exprNode.add(callProcNode);
-            exprNode.add(callProcSplitted[0]);
+            ArrayList<String> callProcNode= (ArrayList<String>) e.getCp().accept(this);
+            //callProcSplitted=callProcNode.split(" ");
+            exprNode.put("code", callProcNode.get(0));
+            exprNode.put("idProc", e.getCp().getRt().getSymbol());
+            if(callProcNode.size() > 1) exprNode.put("serviceInstr", callProcNode.get(1));
+
             return exprNode;
         }
 
@@ -233,11 +270,17 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(GreaterEqualsOP ge) {
-        ArrayList<String> expr1= (ArrayList<String>) ge.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) ge.getE1().accept(this);
-        ArrayList<String> geNode= new ArrayList<String>();
-        geNode.add(expr1.get(0) + " >= " + expr2.get(0));
-        geNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) ge.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) ge.getE1().accept(this);
+        Map<String, String> geNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        geNode.put("code", expr1.get("code") + " >= " + expr2.get("code"));
+        if( ! structInstructions.equals("")) geNode.put("serviceInstr", structInstructions);
+       // geNode.add(null);
 
 
         return geNode;
@@ -245,11 +288,17 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(GreaterThanOP gt) {
-        ArrayList<String> expr1= (ArrayList<String>) gt.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) gt.getE1().accept(this);
-        ArrayList<String> gtNode= new ArrayList<String>();
-        gtNode.add(expr1.get(0) + " > " + expr2.get(0));
-        gtNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) gt.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) gt.getE1().accept(this);
+        Map<String, String> gtNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        gtNode.put("code", expr1.get("code") + " > " + expr2.get("code"));
+        if( ! structInstructions.equals("")) gtNode.put("serviceInstr", structInstructions);
+        //gtNode.add(null);
 
 
         return gtNode;
@@ -257,9 +306,9 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(Id id) {
-        ArrayList<String> idNode= new ArrayList<String>();
-        idNode.add(id.getId());
-        idNode.add(null);
+        Map<String, String> idNode= new HashMap<String, String>();
+        idNode.put("code", id.getId());
+        //idNode.add(null);
 
         return idNode;
     }
@@ -268,12 +317,12 @@ public class CGenerator implements Visitor {
     public Object visit(IdListInitOP x) {
         String idListInitNode = this.typeVarDecl.equals("string") ? "*" + x.getId().getId() : x.getId().getId();
         if(x.getExpr() != null) {
-            ArrayList<String> expr = (ArrayList<String>) x.getExpr().accept(this);
+            Map<String, String> expr = (Map<String, String>) x.getExpr().accept(this);
             if (this.isGlobalVar) {
-                 this.globalAssignVar += x.getId().getId() + " = " + expr.get(0) +";\n";
+                 this.globalAssignVar += x.getId().getId() + " = " + expr.get("code") +";\n";
             } else {
                 idListInitNode += " = ";
-                idListInitNode += expr.get(0);
+                idListInitNode += expr.get("code");
             }
         }
         return idListInitNode;
@@ -281,9 +330,11 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(IfOP c) {
-        String ifNode= "if (";
-        ArrayList<String> expr= (ArrayList<String>) c.getE().accept(this);
-        ifNode += expr.get(0) + ") {\n";
+        String ifNode= "";
+        Map<String, String> expr= (Map<String, String>) c.getE().accept(this);
+        if(expr.containsKey("serviceInstr")) ifNode += expr.get("serviceInstr");
+        ifNode += "if (";
+        ifNode += expr.get("code") + ") {\n";
         ifNode += (String) c.getsList().accept(this);
         ifNode += "}\n";
 
@@ -294,68 +345,110 @@ public class CGenerator implements Visitor {
         if(c.getEl()!=null) {
             ifNode += (String) c.getEl().accept(this);
         }
+
+        /* Aggiungo le parentesi } che devono essere chiuse degli elif. */
+        while(this.countElifOP != 0) {
+            ifNode += "}\n";
+            this.countElifOP--;
+        }
+
         return ifNode;
     }
 
     @Override
     public Object visit(LessEqualsOP le) {
-        ArrayList<String> expr1= (ArrayList<String>) le.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) le.getE1().accept(this);
-        ArrayList<String> leNode= new ArrayList<String>();
-        leNode.add(expr1.get(0) + " <= " + expr2.get(0));
-        leNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) le.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) le.getE1().accept(this);
+        Map<String, String> leNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        leNode.put("code", expr1.get("code") + " <= " + expr2.get("code"));
+        if( ! structInstructions.equals("")) leNode.put("serviceInstr", structInstructions);
+       // leNode.add(null);
         return leNode;
     }
 
 
     @Override
     public Object visit(LessThanOP lt) {
-        ArrayList<String> expr1= (ArrayList<String>) lt.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) lt.getE1().accept(this);
-        ArrayList<String> ltNode= new ArrayList<String>();
-        ltNode.add(expr1.get(0) + " < " + expr2.get(0));
-        ltNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) lt.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) lt.getE1().accept(this);
+        Map<String, String> ltNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        ltNode.put("code", expr1.get("code") + " < " + expr2.get("code"));
+        if( ! structInstructions.equals("")) ltNode.put("serviceInstr", structInstructions);
+       // ltNode.add(null);
         return ltNode;
     }
 
     @Override
     public Object visit(MinusOP m) {
-        ArrayList<String> expr1= (ArrayList<String>) m.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) m.getE1().accept(this);
-        ArrayList<String> minusNode= new ArrayList<String>();
-        minusNode.add(expr1.get(0) + " - " + expr2.get(0));
-        minusNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) m.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) m.getE1().accept(this);
+        Map<String, String> minusNode= new HashMap<String, String>();
+        String structInstructions = "";
+
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        minusNode.put("code", expr1.get("code") + " - " + expr2.get("code"));
+        if( ! structInstructions.equals("")) minusNode.put("serviceInstr", structInstructions);
+       // minusNode.add(null);
 
         return minusNode;
     }
 
     @Override
     public Object visit(NotEqualsOP ne) {
-        ArrayList<String> expr1= (ArrayList<String>) ne.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) ne.getE1().accept(this);
-        ArrayList<String> neNode= new ArrayList<String>();
-        neNode.add(expr1.get(0) + " != " + expr2.get(0));
-        neNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) ne.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) ne.getE1().accept(this);
+        Map<String, String> neNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        neNode.put("code", expr1.get("code") + " != " + expr2.get("code"));
+        if( ! structInstructions.equals("")) neNode.put("serviceInstr", structInstructions);
+        //neNode.add(null);
         return neNode ;
     }
 
     @Override
     public Object visit(NotOP n) {
-        ArrayList<String> expr= (ArrayList<String>) n.getNe().accept(this);
-        ArrayList<String> notNode= new ArrayList<String>();
-        notNode.add("!"+expr.get(0));
-        notNode.add(null);
+        Map<String, String> expr= (Map<String, String>) n.getNe().accept(this);
+        Map<String, String> notNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+
+        notNode.put("code", "!"+expr.get("code"));
+        if( ! structInstructions.equals("")) notNode.put("serviceInstr", structInstructions);
+       // notNode.add(null);
 
         return notNode;
     }
 
     @Override
     public Object visit(OrOP or) {
-        ArrayList<String> expr1= (ArrayList<String>) or.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) or.getE1().accept(this);
-        ArrayList<String> orNode= new ArrayList<String>();
-        orNode.add(expr1.get(0) + " || " + expr2.get(0));
-        orNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) or.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) or.getE1().accept(this);
+        Map<String, String> orNode= new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        orNode.put("code", expr1.get("code") + " || " + expr2.get("code"));
+        if( ! structInstructions.equals("")) orNode.put("serviceInstr", structInstructions);
+        //orNode.add(null);
         return orNode;
     }
 
@@ -373,12 +466,17 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(PlusOP p) {
-        ArrayList<String> expr1= (ArrayList<String>) p.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) p.getE1().accept(this);
-        ArrayList<String> plusNode= new ArrayList<String>();
+        Map<String, String> expr1= (Map<String, String>) p.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) p.getE1().accept(this);
 
-        plusNode.add(expr1.get(0) + " + " + expr2.get(0));
-        plusNode.add(null);
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        Map<String, String> plusNode= new HashMap<String, String>();
+        plusNode.put("code", expr1.get("code") + " + " + expr2.get("code"));
+        if( ! structInstructions.equals("")) plusNode.put("serviceInstr", structInstructions);
+       // plusNode.add(null);
 
         return plusNode;
     }
@@ -398,22 +496,22 @@ public class CGenerator implements Visitor {
             ArrayList<String> returnList = new ArrayList<String>();
             String structInstructions = "";
             for(Expr e : pb.getRe()) {
-                ArrayList<String> expr =(ArrayList<String>) e.accept(this);
-                if(expr.get(1)!=null){
+                Map<String, String> expr =(Map<String, String>) e.accept(this);
+                if(expr.containsKey("idProc")){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
-                        if(sc.getNome().equals(expr.get(1) + "_struct")) structC = sc;
+                        if(sc.getNome().equals(expr.get("idProc") + "_struct")) structC = sc;
                     }
                     if(structC != null){
-                        structInstructions += structC.getNome() + " " + structC.getNome() + "VarRes" + this.indexResultStruct + " = " + expr.get(0) + ";\n";
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "VarRes" + this.indexResultStruct + " = " + expr.get("code") + ";\n";
 
                         for(int i=0; i< structC.getIndex();i++){
                             returnList.add(structC.getNome()+ "VarRes" + this.indexResultStruct + ".var"+i);
                         }
                         this.indexResultStruct++;
-                    } else returnList.add(expr.get(0));
+                    } else returnList.add(expr.get("code"));
                 } else {
-                    returnList.add(expr.get(0));
+                    returnList.add(expr.get("code"));
                 }
             }
 
@@ -519,27 +617,43 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(Stat s) {
-        if(s.getCp() != null) return (String) s.getCp().accept(this)+";\n";
+        if(s.getCp() != null) {
+            ArrayList<String> cp = (ArrayList<String>) s.getCp().accept(this);
+            if (cp.size() > 1 ) return cp.get(1) + cp.get(0) + ";\n";
+            else return cp.get(0) + ";\n";
+
+        }
         return null;
     }
 
     @Override
     public Object visit(TimesOP t) {
-        ArrayList<String> expr1= (ArrayList<String>) t.getE().accept(this);
-        ArrayList<String> expr2= (ArrayList<String>) t.getE1().accept(this);
-        ArrayList<String> timesNode = new ArrayList<String>();
-        timesNode.add(expr1.get(0) + " * " + expr2.get(0));
-        timesNode.add(null);
+        Map<String, String> expr1= (Map<String, String>) t.getE().accept(this);
+        Map<String, String> expr2= (Map<String, String>) t.getE1().accept(this);
+        Map<String, String> timesNode = new HashMap<String, String>();
+
+        String structInstructions = "";
+        if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
+        if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
+
+        timesNode.put("code", expr1.get("code") + " * " + expr2.get("code"));
+        if( ! structInstructions.equals("")) timesNode.put("serviceInstr", structInstructions);
+        //timesNode.add(null);
 
         return timesNode;
     }
 
     @Override
     public Object visit(UMinusOP u) {
-        ArrayList<String> uMinusNode= new ArrayList<String>();
-        ArrayList<String> expr = (ArrayList<String>) u.getE().accept(this);
-        uMinusNode.add("-"+expr.get(0));
-        uMinusNode.add(null);
+        Map<String, String> uMinusNode= new HashMap<String, String>();
+        Map<String, String> expr = (Map<String, String>) u.getE().accept(this);
+
+        String structInstructions = "";
+        if(expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+
+        uMinusNode.put("code", "-"+expr.get("code"));
+        if( ! structInstructions.equals("")) uMinusNode.put("serviceInstr", structInstructions);
+        //uMinusNode.add(null);
 
         return uMinusNode;
     }
@@ -566,9 +680,12 @@ public class CGenerator implements Visitor {
             whileNode += (String) c.getsList1().accept(this);
         }
 
+        Map<String, String> expr = (Map<String, String>) c.getE().accept(this);
+
+        if(expr.containsKey("serviceInstr")) whileNode += expr.get("serviceInstr");
+
         whileNode += "while (";
-        ArrayList<String> expr = (ArrayList<String>) c.getE().accept(this);
-        whileNode += expr.get(0);
+        whileNode += expr.get("code");
         whileNode += ") {\n";
 
         whileNode += (String) c.getsList2().accept(this);
@@ -583,21 +700,24 @@ public class CGenerator implements Visitor {
         String writeOp = "";
         ArrayList<String> stringNodes = new ArrayList<String>();
         ArrayList<String> exprNodes = new ArrayList<String>();
+        String structInstructions = "";
+
         for(Expr e : c.getExprList()) {
-            ArrayList<String> expr= (ArrayList<String>) e.accept(this);
+            Map<String, String> expr= (Map<String, String>) e.accept(this);
             if (e instanceof StringConst) {
-                stringNodes.add(expr.get(0));
+                stringNodes.add(expr.get("code"));
             } else {
-                if (expr.get(1) != null ) {
-                    String structInstructions = "";
+                if(expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+                if (expr.containsKey("idProc")) {
+
                     StructC structC = null;
                     for(StructC sc: this.structMethod){
-                        if(sc.getNome().equals(expr.get(1)+"_struct")) structC = sc;
+                        if(sc.getNome().equals(expr.get("idProc")+"_struct")) structC = sc;
                     }
 
                     String [] returnType = this.getStringSplitted(e.getRt().getType(), 1);
                     if (structC != null) {
-                        structInstructions += structC.getNome() + " " + structC.getNome() + "VarWrite" + this.indexWriteStruct + " = " + expr.get(0) + ";\n";
+                        structInstructions += structC.getNome() + " " + structC.getNome() + "VarWrite" + this.indexWriteStruct + " = " + expr.get("code") + ";\n";
 
                         for(int i=0; i< structC.getIndex();i++){
                             stringNodes.add(this.getTypeInWR(returnType[i], "write"));
@@ -606,17 +726,19 @@ public class CGenerator implements Visitor {
                         this.indexWriteStruct++;
                     } else {
                         stringNodes.add(this.getTypeInWR(returnType[0], "write"));
-                        exprNodes.add(expr.get(0));
+                        exprNodes.add(expr.get("code"));
                     }
-
-                    if (! structInstructions.equals("")) writeOp += structInstructions;
                 } else {
                     stringNodes.add(this.getTypeInWR(e.getRt().getType(), "write"));
-                    exprNodes.add(expr.get(0));
+                    exprNodes.add(expr.get("code"));
                 }
 
             }
         }
+
+        /* Aggiungo le istruzioni di servizio (es. struct) prima della print. */
+        if (! structInstructions.equals("")) writeOp += structInstructions;
+
         writeOp += "printf(\"";
         for (String s : stringNodes) {
             s = s.replace("\n", "\\n");
@@ -639,44 +761,44 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(StringConst sc) {
-        ArrayList<String> stringConstNode= new ArrayList<String>();
-        stringConstNode.add("\"" + sc.getS() + "\"");
-        stringConstNode.add(null);
+        Map<String, String> stringConstNode= new HashMap<String, String>();
+        stringConstNode.put("code", "\"" + sc.getS() + "\"");
+        //stringConstNode.add(null);
 
         return stringConstNode;
     }
 
     @Override
     public Object visit(IntConst ic) {
-        ArrayList<String> intConstNode= new ArrayList<String>();
-        intConstNode.add(ic.getVal()+"");
-        intConstNode.add(null);
+        Map<String, String> intConstNode= new HashMap<String, String>();
+        intConstNode.put("code", ic.getVal()+"");
+        //intConstNode.add(null);
 
         return intConstNode;
     }
 
     @Override
     public Object visit(Bool b) {
-        ArrayList<String> boolNode= new ArrayList<String>();
-        boolNode.add(""+b.isB());
-        boolNode.add(null);
+        Map<String, String> boolNode= new HashMap<String, String>();
+        boolNode.put("code", ""+b.isB());
+        //boolNode.add(null);
 
         return boolNode;
     }
 
     @Override
     public Object visit(Null c) {
-        ArrayList<String> nullNode= new ArrayList<String>();
-        nullNode.add("\"\"");
-        nullNode.add(null);
+        Map<String, String> nullNode= new HashMap<String, String>();
+        nullNode.put("code", "\"\"");
+        //nullNode.add(null);
         return nullNode;
     }
 
     @Override
     public Object visit(FloatConst fc) {
-        ArrayList<String> floatNode= new ArrayList<String>();
-        floatNode.add(fc.getF()+"");
-        floatNode.add(null);
+        Map<String, String> floatNode= new HashMap<String, String>();
+        floatNode.put("code", fc.getF()+"");
+        //floatNode.add(null);
         return floatNode;
     }
 }

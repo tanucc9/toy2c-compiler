@@ -38,11 +38,11 @@ str1,xx,str2:=retMul("ciao ", 6);
 write(str1, xx, str2, "\n");
 
 write ("Inserisci 1 stringa, 1 int, 1 stringa");
-read(str1, xx, str2);
+readln(str1, xx, str2);
 write("Il valore aggiornato di str1 è:", str1, "\n il val di xx è:", xx, "\n il val di str2 è:", str2, "\n");
 
 write ("Inserisci 2 interi e 1 float");
-read(xx, t, f);
+readln(xx, t, f);
 write("I valori inseriti sono: ", xx, t, f);
 printStr("oooo");
 write(retStr("compilatore"), "\n", retMul("casa mia", 3) , "\n");

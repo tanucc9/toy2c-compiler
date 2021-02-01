@@ -1,0 +1,6 @@
+proc main() void:
+    /* this function prints out the params you pass */
+    write("Hello, world!\n");
+    /* this arrows returns a value iff compatible with what declared in the "main" definition */
+    ->
+corp;

@@ -1,0 +1,28 @@
+proc getPair() int, int:
+    -> 1, 1
+corp;
+
+proc getPairRec() int, int:
+    -> getPair()
+corp;
+
+proc add(int a; int b) int:
+    write("returning ", a, " and ", b, "\n");
+    -> a + b
+corp;
+
+proc three(int a; int b; int c) int, int, int:
+    int r1 := a + b;
+    int r2 := b + c;
+    int r3 := a + c;
+    -> r1, r2, r3
+corp;
+
+proc main() void:
+    int a, b, c;
+    add(1, 5);
+    three(getPairRec(), add(getPair())+c);
+    a, b, c, c:= three(getPairRec(), add(getPair())+c), c+c;
+    write(a, ", ", b, ", ", c);
+    ->
+corp;

@@ -8,15 +8,15 @@ proc showmenu() void:
     write("Per la sottrazione digita 2\n");
     write("Per la moltiplicazione digita 3\n");
     write("Per la divisione digita 4\n");
-    read(operazione);
+    readln(operazione);
     ->
 corp;
 
 proc getValues() void:
     write("Inserisci primo valore\n");
-    read(primo);
+    readln(primo);
     write("Inserisci secondo valore\n");
-    read(secondo);
+    readln(secondo);
     ->
 corp;
 

@@ -1,0 +1,11 @@
+proc main() void:
+    int a;
+    if a > 0 then
+        write("Positive");
+    elif a < 0 then
+        write("Negative");
+    else
+        write("Zero");
+    fi;
+    ->
+corp;

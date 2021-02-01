@@ -1,0 +1,24 @@
+int glo := 3;
+
+proc getTwins(int a) int, int:
+    -> a, a
+corp;
+proc areEquals(int a; int b) bool:
+    -> a = b
+corp;
+
+proc main() void:
+    string _word1, word2;
+    if !areEquals(getTwins(glo)) then
+        _word1 := "dead";
+        word2 := "code";
+    elif areEquals(getTwins(glo)) then
+        _word1 := "ok";
+        word2 := "";
+    else
+        _word1 := "dead";
+        word2 := "code";
+    fi;
+    write(_word1, " ", word2);
+    ->
+corp;

@@ -1,0 +1,71 @@
+proc aa(int n, n1) int, int:
+    -> 1, 2
+corp;
+
+proc aaa(int n) int, int:
+    -> 1, 2
+corp;
+
+proc x(float a; int b; float c) string, string:
+    -> "inizio", "fine"
+corp;
+proc xxx(int a; int b; int c) string, string:
+    -> "inizio", "fine"
+corp;
+
+proc singleInt(int n, n1, n2) int:
+    -> n + n1 + n2
+corp;
+
+proc singleInt2(int n) int:
+    -> n
+corp;
+
+proc retBool(int n) bool:
+    -> true
+corp;
+
+proc main() void:
+    int n := 1, k := 1;
+    int zzz, i;
+    float a, b;
+    string str1, str2;
+    a := 4;
+    a, b := 4, 5;
+    a, str1, str2, b := 4, "asdf", "sadfg", 5;
+    a, str1, str2, b := 4, xxx(aa(5,6), n+k), 5;
+    a, str1, str2, b := 4, xxx(aa(aaa(3)), n+k), 5;
+    a, str1, str2, b := 4, x(1, k, n+k), 5;
+
+    zzz := singleInt(aaa(singleInt2(4)), 5) + 3;
+    write("il valore di zzz + è ", zzz, "\n");
+
+    zzz := singleInt(aaa(singleInt2(4)), 5) - 3;
+    write("il valore di zzz - è ", zzz, "\n");
+
+    zzz := singleInt(aaa(singleInt2(4)), 5) * 3;
+    write("il valore di zzz * è ", zzz, "\n");
+
+    zzz := singleInt(aaa(singleInt2(4)), 5) / 3;
+    write("il valore di zzz / è ", zzz, "\n");
+
+    while singleInt(aaa(singleInt2(4)), 5) > i do
+        write("sono nel write");
+        i := i + 1;
+    od;
+
+    if singleInt(aaa(singleInt2(4)), 5) = singleInt(aaa(singleInt2(4)), 5) then
+        write("Sono nell'if \n");
+    elif ! retBool(singleInt(aaa(2),5)) then
+        write("ciao");
+    elif ! retBool(singleInt(aaa(2),5)) then
+        write("ciao");
+    elif ! retBool(singleInt(aaa(2),5)) then
+        write("ciao");
+    else write("sono nell'else \n");
+    fi;
+
+    write("Stampo direttamente la chiamata multipla di funzioni: ", aaa(singleInt(aaa(singleInt2(4)), 5)), "\n");
+    write(str1, str2);
+    ->
+corp;

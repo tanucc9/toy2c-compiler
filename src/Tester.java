@@ -22,7 +22,7 @@ public class Tester {
 
         CGenerator cg= new CGenerator();
         String fileC = (String) cg.visit(astExt);
-
+        System.out.println(fileC);
 //        String codIntermedio=null;
 //        for(int i=0; i < args.length; i++){
 //            if(args[i].equals("-intc")) codIntermedio=args[i+1];
@@ -35,7 +35,7 @@ public class Tester {
 //            fileOutDir = System.getProperty("user.dir") + "/codIntermedio.c" ;
 //        }
 
-        String fileOutDir = System.getProperty("user.dir") + "/" + args[1];
+    /*    String fileOutDir = System.getProperty("user.dir") + "/" + args[1];
         File f = new File(fileOutDir);
         if(!f.exists()) {
             if (f.createNewFile()) {
@@ -50,6 +50,6 @@ public class Tester {
             FileWriter fw = new FileWriter(fileOutDir);
             fw.write(fileC);
             fw.close();
-        }
+        }*/
    }
 }

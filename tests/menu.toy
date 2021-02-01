@@ -1,0 +1,108 @@
+int option;
+
+proc sommaNumeri() void:
+    int a, b;
+    write("Fornisci il primo addendo> ");
+    readln(a);
+    write("Fornisci il secondo addendo> ");
+    readln(b);
+    write("Somma: ", a + b, "\n");
+    ->
+corp;
+
+proc moltiplicaNumeri() void:
+    int a, b, res := 0, i;
+    write("Fornisci il primo fattore> ");
+    readln(a);
+    write("Fornisci il secondo fattore> ");
+    readln(b);
+    i := 0;
+    while i < b do
+        res := res + a;
+        i := i + 1;
+    od;
+    write("Moltiplicazione: ", res, "\n");
+    ->
+corp;
+
+proc dividiNaturali() void:
+    int a, b;
+    write("Fornisci il dividendo> ");
+    readln(a);
+    write("Fornisci il divisore> ");
+    readln(b);
+    write("Rapporto: ", a / b, "\n");
+    ->
+corp;
+
+proc elevaAPotenza() void:
+    int a, b, res := 1, i;
+    write("Fornisci la base> ");
+    readln(a);
+    write("Fornisci l'esponente> ");
+    readln(b);
+    i := 0;
+    while i < b do
+        res := res * a;
+        i := i + 1;
+    od;
+    write("Moltiplicazione: ", res, "\n");
+    ->
+corp;
+
+proc calcolareSuccessioneFibonacci() void:
+    int n, i;
+    int a, b;
+    write("Fornisci quanti numeri di Fibonacci calcolare> ");
+    readln(n);
+
+    if n >= 0 then
+        write("Fibonacci di 0 = 0\n");
+        write("Fibonacci di 1 = 1\n");
+        a := 0;
+        b := 1;
+        i := 2;
+        while i <= n do
+            b := b + a;
+            a := b - a;
+            write("Fibonacci di ", i, " = ", b, "\n");
+            i := i + 1;
+        od;
+    fi;
+    ->
+corp;
+
+proc menu() void:
+    write("Seleziona l'operazione che desideri eseguire\n\n");
+    write("[0] sommare due numeri\n");
+    write("[1] moltiplicare due numeri\n");
+    write("[2] dividere due numeri naturali\n");
+    write("[3] elevare a potenza un numero per una base\n");
+    write("[4] calcolare la successione di Fibonacci\n");
+    write("[*] ...uscire\n\n");
+    write("> ");
+    readln(option);
+    ->
+corp;
+
+proc main() void:
+
+    menu();
+    while 0 <= option && option <= 4 do
+        if option = 0 then
+            sommaNumeri();
+        elif option = 1 then
+            moltiplicaNumeri();
+        elif option = 2 then
+            dividiNaturali();
+        elif option = 3 then
+            elevaAPotenza();
+        elif option = 4 then
+            calcolareSuccessioneFibonacci();
+        fi;
+        write("\n");
+        menu();
+    od;
+    write("Uscita.\n");
+    ->
+corp;

@@ -4,9 +4,9 @@ proc multAddDiff ()int, int, int:
 	int primo, secondo, mul, add, diff;
 
 	write("Inserire il primo argomento:\n");
-	read(primo);
+	readln(primo);
 	write("Inserire il secondo argomento:\n");
-	read(secondo);
+	readln(secondo);
 	mul, add, diff := primo*secondo, primo + secondo, primo - secondo;
 	-> mul, add, diff
 corp;
@@ -54,7 +54,7 @@ proc main()void :
 	fi;
 	val := returnIntero(5);
 	writeNewLines(returnIntero(6));
-	printValues(returnValues(5, "sssss"));
+	printValues(returnValues(returnValues(5, "sssss")));
 	write ("il nome è:", nome);
 	write ("il numero float: ", f);
 	write("Il risultato di int è:", val);
