@@ -39,3 +39,11 @@ proc main() void:
 
     ->
 corp;
+
+y -> int int
+
+x(y()) -> x(int,int)
+
+Struct struc_y = y()
+Struct xx = x();
+x( structY1, y2);
