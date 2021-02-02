@@ -147,6 +147,9 @@ public class SemanticAnalisys implements Visitor {
         return null;
     }
 
+    /* Funzione utile quando si ha un proc.
+    * Ritorna un array di stringhe contenente i tipi di ritorno (se index = 1)
+    * oppure i parametri (se index = 0) */
     private String[] getStringSplitted(String type, int index){
         return type.split("->")[index].split(",");
     }
@@ -285,7 +288,7 @@ public class SemanticAnalisys implements Visitor {
                 parTypeCpList.add(s);
             }
 
-            //Controllo se il numero dei parametri è uguale, altrimenti già posso lanciare errore
+            //Controllo se il numero dei parametri è uguale. Se diverso, già posso lanciare errore
             if(parType.size() != parTypeCpList.size()) throw new Error("Il numero dei parametri passati al proc "+ cp.getVal() +" non corrisponde al numero dei parametri attesi.");
 
             /* Iterator, dopo aver controllato il numero dei parametri, controllo se
@@ -296,11 +299,10 @@ public class SemanticAnalisys implements Visitor {
             Iterator<String> actualParamTypes = parType.iterator();
             Iterator<String> formalParamTypes = parTypeCpList.iterator();
             while (formalParamTypes.hasNext()) {
-                // TODO: ...
                 String formalParamType = formalParamTypes.next();
                 String actualParamType = actualParamTypes.next();
                 try {
-                    isCompatibleType("compatible_assign", actualParamType, formalParamType);
+                    this.isCompatibleType("compatible_assign", actualParamType, formalParamType);
                 } catch (Error e) {
                     throw new Error(" I tipi dei parametri passati al proc " + cp.getVal() + " non corrispondono a quelli attesi. ");
                 }
@@ -344,8 +346,11 @@ public class SemanticAnalisys implements Visitor {
     @Override
     public Object visit(ElifOP c) {
         RowTable rt= (RowTable) c.getE().accept(this);
-        // TODO: "int,int,->bool," not equals "bool" test14.toy@15
-        if(!rt.getType().equals("bool"))throw new Error("La condizione deve essere di tipo boolean");
+
+        if(rt.getKind() != null && rt.getKind().equals("method")) {
+            String [] resType = this.getStringSplitted(rt.getType(), 1);
+            if(resType.length != 1 || !resType[0].equals("bool")) throw new Error("La condizione dell'elif deve essere di tipo boolean");
+        } else if(!rt.getType().equals("bool")) throw new Error("La condizione dell'elif deve essere di tipo boolean");
         return (boolean) c.getsList().accept(this);
     }
 
@@ -384,6 +389,7 @@ public class SemanticAnalisys implements Visitor {
     public Object visit(Expr e) {
         if(e.getCp() != null){
             RowTable rt= (RowTable) e.getCp().accept(this);
+            e.setRt(rt);
             return rt;
         }
         return null;
@@ -432,7 +438,7 @@ public class SemanticAnalisys implements Visitor {
            String[] resType = this.getStringSplitted(expr2.getType(), 1);
             if(resType.length==1) type2=resType[0];
             else throw new Error("C'è un problema sui tipi di ritorno della funzione passata come espressione al GreaterThan.");
-        } else{
+        } else {
             type2=expr2.getType();
         }
         String resultType = this.isCompatibleType("relop",type1, type2);
@@ -768,7 +774,21 @@ public class SemanticAnalisys implements Visitor {
 
         if( ! (returnType.size() == 0 && resultType.size() ==1 && resultType.get(0).equals("void"))) {
             if(resultType.size() != returnType.size()) throw new Error("Il numero dei valori ritornati non corrisponde a quello atteso.");
-            if (!resultType.equals(returnType)) throw new Error(" I tipi dei valori ritornati da "+ p.getId().getId() +" non corrispondono a quelli attesi. ");
+
+            /* Controllo se i tipi di ogni parametro da passare è compatibile con
+            * quello che si aspetta di ricevere. Per compatibile si intende che viene
+            * accettato anche int -> float o float-> int. */
+            Iterator<String> returnTypeIterator = returnType.iterator();
+            Iterator<String> resultTypeIterator = resultType.iterator();
+            while (returnTypeIterator.hasNext()) {
+                String type1 = returnTypeIterator.next();
+                String type2 = resultTypeIterator.next();
+                try {
+                    this.isCompatibleType("compatible_assign", type1, type2);
+                } catch (Error e) {
+                    throw new Error(" I tipi dei valori ritornati da "+ p.getId().getId() +" non corrispondono a quelli attesi.");
+                }
+            }
         }
 
         this.exitScope();

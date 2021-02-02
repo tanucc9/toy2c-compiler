@@ -1,4 +1,5 @@
-string l, ll, lll;
+string l, ll, lll, firstString, secondString;
+
 proc j()float, int:
     int n, y, z := 0;
     float zz, yy := 5.3;
@@ -26,16 +27,44 @@ proc x()void :
 		->
 corp;
 
+proc getFirstString(string s) string:
+
+-> s
+corp;
+
+proc getSecondString(string s) string:
+
+-> s
+corp;
+
 proc main() void:
 
   float f;
-  int n;
+  int n, i := 1;
   l,ll,lll := "l1","l2","l3";
   write(l, ll, lll, "\n");
   f,n := j();
-
   write(f,n);
 
+  while i <> 0 do
+    write("Inserisci prima stringa: ");
+    readln(l);
+    write("Inserisci seconda stringa:   ");
+    readln(ll);
+    if l > ll then
+        write("Stringa ", l," > della seconda stringa ", ll, "\n");
+    elif l < ll then
+        write("Stringa ", l," < della seconda stringa ", ll, "\n");
+    else write("Stringa ", l," = alla seconda stringa ", ll, "\n");
+    fi;
+    write("Inserisci 0 per interrompere l'esecuzione di questo programma oppure un qualsiasi altro numero per continuare:    ");
+    readln(i);
+  od;
+
+  if getFirstString("ciao") > getSecondString("hola") then
+    write("Ciao > Hola\n");
+  else write ("Ciao < Hola \n");
+  fi;
 ->
 corp;
 

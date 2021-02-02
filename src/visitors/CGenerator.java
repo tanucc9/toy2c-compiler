@@ -65,6 +65,17 @@ public class CGenerator implements Visitor {
         return null;
     }
 
+    private String getTypeExprInRelOP(String type, String kind) {
+        if(kind != null && kind.equals("method")) {
+            String res [] = this.getStringSplitted(type, 1);
+            if(res.length == 1) return res[0];
+        } else
+            return type;
+
+
+        return null;
+    }
+
     @Override
     public Object visit(ProgramOP p) {
         this.fileC += "#include <stdio.h>\n"
@@ -156,7 +167,7 @@ public class CGenerator implements Visitor {
         if(cp.getElist() != null ) {
             for(Expr e : cp.getElist()) {
                 Map<String, String> expr = (Map<String, String>) e.accept(this);
-                if(expr.containsKey("serviceInstr")) structInstructions = expr.get("serviceInstr");
+                if(expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
                 if(expr.containsKey("idProc")){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
@@ -244,8 +255,14 @@ public class CGenerator implements Visitor {
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
+        String type1 = this.getTypeExprInRelOP(eq.getE().getRt().getType(), eq.getE().getRt().getKind());
+        String type2 = this.getTypeExprInRelOP(eq.getE1().getRt().getType(), eq.getE1().getRt().getKind());
 
-        eqNode.put("code", expr1.get("code") + " == " + expr2.get("code"));
+        if (type1.equals("string") && type2.equals("string"))
+            eqNode.put("code", "(strcmp(" + expr1.get("code") + ", " + expr2.get("code") + ")) == 0");
+        else
+            eqNode.put("code", expr1.get("code") + " == " + expr2.get("code"));
+
         if( ! structInstructions.equals("")) eqNode.put("serviceInstr", structInstructions);
         //eqNode.add(null);
         return eqNode;
@@ -278,7 +295,14 @@ public class CGenerator implements Visitor {
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
-        geNode.put("code", expr1.get("code") + " >= " + expr2.get("code"));
+        String type1 = this.getTypeExprInRelOP(ge.getE().getRt().getType(), ge.getE().getRt().getKind());
+        String type2 = this.getTypeExprInRelOP(ge.getE1().getRt().getType(), ge.getE1().getRt().getKind());
+
+        if (type1.equals("string") && type2.equals("string"))
+            geNode.put("code", "(strcmp(" + expr1.get("code") + ", " + expr2.get("code") + ")) >= 0");
+        else
+            geNode.put("code", expr1.get("code") + " >= " + expr2.get("code"));
+
         if( ! structInstructions.equals("")) geNode.put("serviceInstr", structInstructions);
        // geNode.add(null);
 
@@ -296,10 +320,15 @@ public class CGenerator implements Visitor {
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
-        gtNode.put("code", expr1.get("code") + " > " + expr2.get("code"));
+        String type1 = this.getTypeExprInRelOP(gt.getE().getRt().getType(), gt.getE().getRt().getKind());
+        String type2 = this.getTypeExprInRelOP(gt.getE1().getRt().getType(), gt.getE1().getRt().getKind());
+
+        if ( type1.equals("string") && type2.equals("string"))
+            gtNode.put("code", "(strcmp(" + expr1.get("code") + ", " + expr2.get("code") + ")) > 0");
+        else
+            gtNode.put("code", expr1.get("code") + " > " + expr2.get("code"));
         if( ! structInstructions.equals("")) gtNode.put("serviceInstr", structInstructions);
         //gtNode.add(null);
-
 
         return gtNode;
     }
@@ -315,17 +344,22 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(IdListInitOP x) {
+        Map <String, String> idListInitNodeRes = new HashMap<String, String>();
         String idListInitNode = this.typeVarDecl.equals("string") ? "*" + x.getId().getId() : x.getId().getId();
+
         if(x.getExpr() != null) {
             Map<String, String> expr = (Map<String, String>) x.getExpr().accept(this);
             if (this.isGlobalVar) {
                  this.globalAssignVar += x.getId().getId() + " = " + expr.get("code") +";\n";
             } else {
+                if(expr.containsKey("serviceInstr")) idListInitNodeRes.put("serviceInstr", expr.get("serviceInstr"));
                 idListInitNode += " = ";
                 idListInitNode += expr.get("code");
             }
         }
-        return idListInitNode;
+        idListInitNodeRes.put("code", idListInitNode);
+
+        return idListInitNodeRes;
     }
 
     @Override
@@ -365,7 +399,14 @@ public class CGenerator implements Visitor {
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
-        leNode.put("code", expr1.get("code") + " <= " + expr2.get("code"));
+        String type1 = this.getTypeExprInRelOP(le.getE().getRt().getType(), le.getE().getRt().getKind());
+        String type2 = this.getTypeExprInRelOP(le.getE1().getRt().getType(), le.getE1().getRt().getKind());
+
+        if (type1.equals("string") && type2.equals("string"))
+            leNode.put("code", "(strcmp(" + expr1.get("code") + ", " + expr2.get("code") + ")) <= 0");
+        else
+            leNode.put("code", expr1.get("code") + " <= " + expr2.get("code"));
+
         if( ! structInstructions.equals("")) leNode.put("serviceInstr", structInstructions);
        // leNode.add(null);
         return leNode;
@@ -382,7 +423,14 @@ public class CGenerator implements Visitor {
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
-        ltNode.put("code", expr1.get("code") + " < " + expr2.get("code"));
+        String type1 = this.getTypeExprInRelOP(lt.getE().getRt().getType(), lt.getE().getRt().getKind());
+        String type2 = this.getTypeExprInRelOP(lt.getE1().getRt().getType(), lt.getE1().getRt().getKind());
+
+        if (type1.equals("string") && type2.equals("string"))
+            ltNode.put("code", "(strcmp(" + expr1.get("code") + ", " + expr2.get("code") + ")) < 0");
+        else
+            ltNode.put("code", expr1.get("code") + " < " + expr2.get("code"));
+
         if( ! structInstructions.equals("")) ltNode.put("serviceInstr", structInstructions);
        // ltNode.add(null);
         return ltNode;
@@ -415,7 +463,14 @@ public class CGenerator implements Visitor {
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
-        neNode.put("code", expr1.get("code") + " != " + expr2.get("code"));
+        String type1 = this.getTypeExprInRelOP(ne.getE().getRt().getType(), ne.getE().getRt().getKind());
+        String type2 = this.getTypeExprInRelOP(ne.getE1().getRt().getType(), ne.getE1().getRt().getKind());
+
+        if (type1.equals("string") && type2.equals("string"))
+            neNode.put("code", "(strcmp(" + expr1.get("code") + ", " + expr2.get("code") + ")) != 0");
+        else
+            neNode.put("code", expr1.get("code") + " != " + expr2.get("code"));
+
         if( ! structInstructions.equals("")) neNode.put("serviceInstr", structInstructions);
         //neNode.add(null);
         return neNode ;
@@ -497,6 +552,7 @@ public class CGenerator implements Visitor {
             String structInstructions = "";
             for(Expr e : pb.getRe()) {
                 Map<String, String> expr =(Map<String, String>) e.accept(this);
+                if (expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
                 if(expr.containsKey("idProc")){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
@@ -660,14 +716,19 @@ public class CGenerator implements Visitor {
 
     @Override
     public Object visit(VarDeclOP c) {
-
+        String structInstructions = "";
         String varDeclNode = c.getType().equals("string") ? "char " : c.getType() + " ";
         this.typeVarDecl=c.getType();
         for(IdListInitOP idList : c.getIdListInit()) {
-            varDeclNode += (String) idList.accept(this);
+            Map <String, String> idListInitRes = (Map <String, String>) idList.accept(this);
+            if(idListInitRes.containsKey("serviceInstr")) structInstructions += idListInitRes.get("serviceInstr");
+            varDeclNode += idListInitRes.get("code");
             if(c.getIdListInit().indexOf(idList)==c.getIdListInit().size()-1) varDeclNode += ";\n";
             else varDeclNode += ", ";
         }
+
+        if ( ! structInstructions.equals("")) varDeclNode = structInstructions + varDeclNode;
+
         return varDeclNode;
     }
 
@@ -741,12 +802,21 @@ public class CGenerator implements Visitor {
 
         writeOp += "printf(\"";
         for (String s : stringNodes) {
+
+            /* Controllo se la stringa è l'ultima da inserire.
+            * Se si, setto a true isLast, in modo da non aggiungere lo spazio prima della
+            * fine della printf (es. printf("ciao ");) <- Questo errore è evitato */
+            boolean isLast = false;
+            if ( stringNodes.indexOf(s) == stringNodes.size()-1 ) isLast = true;
+
             s = s.replace("\n", "\\n");
             s = s.replace("\t", "\\t");
             s = s.replace("\r", "\\r");
             s = s.replace("\"", "");
 
-            writeOp += s + " ";
+            if (isLast) writeOp += s;
+            else writeOp += s + " ";
+
         }
         writeOp += "\"";
 

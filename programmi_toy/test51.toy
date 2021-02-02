@@ -1,0 +1,48 @@
+proc getPair() int, int:
+    -> 1, 1
+corp;
+
+proc getPairRec() int, int:
+    -> getPair()
+corp;
+
+proc add(int a; int b) int:
+    write("returning ", a, " and ", b, "\n");
+    -> a + b
+corp;
+
+proc getNumbers(int i, x, y, z; string s) int:
+    write(i,x,y,z);
+    -> i + x * y + z
+corp;
+
+proc three(int a; int b; int c) int, int, int:
+    int r1 := a + b;
+    int r2 := b + c;
+    int r3 := a + c;
+    -> r1, r2, r3
+corp;
+
+proc procNew(int a; int b) int:
+    write("returning ", a, " and ", b, "\n");
+    -> getNumbers(three(getPairRec(), add(getPair())+3), 5, "ok")
+corp;
+
+proc main() void:
+    int a, b, c := 5;
+    int err := getNumbers(three(getPairRec(), add(getPair())+3), 5, "ok");
+    write("Il valore della variabile err è :" , err, "\n");
+    add(1, 5);
+    three(getPairRec(), add(getPair())+c);
+    a, b, c, c:= three(getPairRec(), add(getPair())+c), c+c;
+    write(a, ", ", b, ", ", c);
+    b := procNew(3,5);
+    while write("prima della condizione del while \n");
+        readln(a);
+        ->
+    a > 3 do
+        write("Il risultato della nuova funzione: ", b, "\n");
+        a := a-1;
+    od;
+    ->
+corp;
