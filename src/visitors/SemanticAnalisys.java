@@ -93,11 +93,11 @@ public class SemanticAnalisys implements Visitor {
                 if(type1.equals(type2)) return "bool";
                 if(type1.equals("float") && type2.equals("int")) return "bool";
                 if(type1.equals("int") && type2.equals("float")) return "bool";
-                else throw new Error("Non è possibile effettuare confrontare tra "+ type1 +" e "+ type2);
+                else throw new Error("Non è possibile confrontare tra "+ type1 +" e "+ type2);
             case "compatible_assign":
-                if (type1.equals("string") || type2.equals("string"))
+                if (type1.equals("string") && type2.equals("string"))
                     return "string";
-                if (type1.equals("bool") || type2.equals("bool"))
+                if (type1.equals("bool") && type2.equals("bool"))
                     return "bool";
                 res = this.numberCompatibility(type1, type2);
                 if(res != null) return res;
@@ -235,7 +235,11 @@ public class SemanticAnalisys implements Visitor {
         if(!idType.equals(exprType)) {
             //Fa il controllo nel caso tipi diversi, ma compatibili
             for (int i = 0; i < idType.size(); i++) {
-               this.isCompatibleType("compatible_assign", idType.get(i), exprType.get(i));
+                try{
+                    this.isCompatibleType("compatible_assign", idType.get(i), exprType.get(i));
+                }catch (Error e){
+                    throw new Error("Non è possibile assegnare " + exprType.get(i) + " a " + idType.get(i) );
+                }
             }
         }
 
