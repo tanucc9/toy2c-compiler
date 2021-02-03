@@ -78,6 +78,11 @@ public class SemanticAnalisys implements Visitor {
                 res = this.numberCompatibility(type1, type2);
                 if(res != null) return res;
                 else throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
+            case "plus_operators":
+                if(type1.equals("string") && type2.equals("string")) return "string";
+                res = this.numberCompatibility(type1, type2);
+                if(res != null) return res;
+                else throw new Error("Non è possibile effettuare l'operazione tra "+ type1 +" e "+ type2);
             case "boolean_operators":
                 if(type1.equals("bool") && type2.equals("bool")) return "bool";
                 else throw new Error("Non è possibile effettuare l'operazione booleana tra "+ type1 +" e "+ type2);
@@ -687,7 +692,7 @@ public class SemanticAnalisys implements Visitor {
         } else{
             type2=expr2.getType();
         }
-        String resultType = this.isCompatibleType("math_operators",type1, type2);
+        String resultType = this.isCompatibleType("plus_operators",type1, type2);
 
         p.getRt().setType(resultType);
         return p.getRt();

@@ -1,0 +1,34 @@
+string g := "dd";
+string j := "ecco" + " qua";
+string y := j + " qua";
+
+proc rets() string:
+->"ciaooooooooo"
+corp;
+
+proc main() void:
+string s,h := rets();
+string t:= "ccc"+"fsf";
+write(h,t);
+s:=rets()+"fdsfsfw";
+write(s);
+write(j, g, y);
+h := "ciao" + "ne" ;
+
+t := "a" + "b" + "c" + "d" ;
+
+write(h, t);
+s:= h + t + s;
+write(s);
+
+if "ciao" + "bello" > "hola" then write("maggiore \n");
+else write("minore \n");
+fi;
+
+if  "boh" + rets()  > "tr" then write("maggiore2 \n");
+elif "boh" + rets()  < "tr" then write("minore2 \n");
+fi;
+
+/* while "AA" < "BB" + "ZZ" do write("nooooooooooo"); od; */
+->
+corp;

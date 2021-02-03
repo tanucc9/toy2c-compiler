@@ -1,0 +1,102 @@
+proc somma() int:
+    int x,y;
+    write("Inserisci il primo numero\n");
+    readln(x);
+    write("Inserisci il secondo numero\n");
+    readln(y);
+
+    ->x + y
+corp;
+
+proc mul() int:
+    int x, y, res:=0;
+    write("Inserisci il primo numero\n");
+    readln(x);
+    write("Inserisci il secondo numero\n");
+    readln(y);
+
+    while y <> 0 do
+        res:=res+x;
+        y:=y-1;
+    od;
+
+-> res
+corp;
+
+proc pot() int:
+    int x, y, res:=0;
+    write("Inserisci il primo numero\n");
+    readln(x);
+    write("Inserisci la potenza\n");
+    readln(y);
+
+    res:=x*x;
+    y:=y-1;
+    while y <> 1 do
+        res:=res*x;
+        y:=y-1;
+    od;
+-> res
+corp;
+
+proc div() int:
+    int x, y, div;
+    write("Inserisci il primo numero\n");
+    readln(x);
+
+    if x > 0 then
+        write("Inserisci il secondo numero\n");
+        readln(y);
+        if y > 0 then div:= x / y;
+        fi;
+    fi;
+
+-> div
+corp;
+
+proc fibonacci() void:
+    int i,n,primo,secondo,terzo;
+    write("Quanti numeri della successione vuoi visualizzare? ");
+    readln(n);
+
+    primo:=1;
+    secondo:=1;
+
+    write("La successione di fibonacci e': ");
+    write(primo, " ");
+    write(secondo, " ");
+
+    i:=2;
+    while i < n do
+        terzo := primo+secondo;
+        primo := secondo;
+        secondo := terzo;
+        write(terzo, " ");
+        i := i+1;
+    od;
+->
+corp;
+
+proc main() void:
+    int val :=0;
+
+
+    write("Inserisci il numero dell'operazione da svolgere\n");
+    write("Per l'addizione digita 1\n");
+    write("Per la moltiplicazione con la somma digita 2\n");
+    write("Per la divisione tra interi digita 3\n");
+    write("Per l'elevamento a potenza digita 4\n");
+    write("Per fibonacci digita 5\n");
+    readln(val);
+
+    if val = 1 then write("Il risultato è: ", somma(), "\n");
+    elif val = 2 then write("Il risultato è: ", mul(), "\n");
+    elif val = 3 then write("Il risultato è: ", div(), "\n");
+    elif val= 4 then write("Il risultato è: ", pot(), "\n");
+    elif val = 5 then fibonacci();
+    else write("Il numero inserito non corrisponde a nessuna operazione possibile!");
+    fi;
+
+
+->
+corp;

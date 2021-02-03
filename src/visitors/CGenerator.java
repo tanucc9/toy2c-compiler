@@ -21,7 +21,10 @@ public class CGenerator implements Visitor {
     private int indexWriteStruct;
     private int indexAssignStruct;
     private int indexResultStruct;
+    private int indexConcatString;
+    private int indexMethodConcatString;
     private int indexParamCallProcStruct;
+    private boolean isFirstConcat;
     private ArrayList<String> fileSplitted;
     private ArrayList<StructC> structMethod;
     private ProcOP currentProc;
@@ -35,10 +38,13 @@ public class CGenerator implements Visitor {
         structDecl="";
         procImpl="";
         this.typeVarDecl="";
+        this.isFirstConcat=true;
         indexWriteStruct=0;
         indexAssignStruct=0;
         indexResultStruct=0;
+        this.indexConcatString=0;
         this.indexParamCallProcStruct = 0;
+        this.indexMethodConcatString=0;
         fileSplitted = new ArrayList<String>();
         structMethod= new ArrayList<StructC>();
         this.currentProc = new ProcOP();
@@ -79,7 +85,6 @@ public class CGenerator implements Visitor {
     @Override
     public Object visit(ProgramOP p) {
         this.fileC += "#include <stdio.h>\n"
-                + "#include <stdlib.h>\n"
                 + "#include <stdbool.h>\n"
                 + "#include <string.h> \n\n";
 
@@ -94,7 +99,7 @@ public class CGenerator implements Visitor {
         }
 
         this.fileC += "\n" + structDecl + "\n" + procDecl + "\n" + procImpl;
-        //System.out.println(this.fileC);
+        System.out.println(this.fileC);
         return this.fileC;
     }
 
@@ -141,12 +146,12 @@ public class CGenerator implements Visitor {
                 exprNode.add(expr.get("code"));
             }
         }
+        this.isFirstConcat=true;
 
         String assignNode = structInstructions.equals("") ? "" : structInstructions ;
         for(int i = 0; i<idNode.size(); i++) {
             assignNode += idNode.get(i) + exprNode.get(i) + ";\n";
         }
-
         return assignNode;
     }
 
@@ -225,7 +230,10 @@ public class CGenerator implements Visitor {
 
         String elifNode = "else {\n";
         Map<String, String> expr= (Map<String, String>) c.getE().accept(this);
-        if(expr.containsKey("serviceInstr")) elifNode += expr.get("serviceInstr");
+        if(expr.containsKey("serviceInstr")) {
+            elifNode += expr.get("serviceInstr");
+            this.isFirstConcat=true;
+        }
         elifNode += "if (";
         elifNode += expr.get("code");
         elifNode += ") {\n";
@@ -350,9 +358,16 @@ public class CGenerator implements Visitor {
         if(x.getExpr() != null) {
             Map<String, String> expr = (Map<String, String>) x.getExpr().accept(this);
             if (this.isGlobalVar) {
-                 this.globalAssignVar += x.getId().getId() + " = " + expr.get("code") +";\n";
+                if(expr.containsKey("serviceInstr")) {
+                    this.globalAssignVar += expr.get("serviceInstr");
+                    this.isFirstConcat = true;
+                }
+                this.globalAssignVar += x.getId().getId() + " = " + expr.get("code") +";\n";
             } else {
-                if(expr.containsKey("serviceInstr")) idListInitNodeRes.put("serviceInstr", expr.get("serviceInstr"));
+                if(expr.containsKey("serviceInstr")) {
+                    idListInitNodeRes.put("serviceInstr", expr.get("serviceInstr"));
+                    this.isFirstConcat = true;
+                }
                 idListInitNode += " = ";
                 idListInitNode += expr.get("code");
             }
@@ -366,7 +381,10 @@ public class CGenerator implements Visitor {
     public Object visit(IfOP c) {
         String ifNode= "";
         Map<String, String> expr= (Map<String, String>) c.getE().accept(this);
-        if(expr.containsKey("serviceInstr")) ifNode += expr.get("serviceInstr");
+        if(expr.containsKey("serviceInstr")) {
+            ifNode += expr.get("serviceInstr");
+            this.isFirstConcat=true;
+        }
         ifNode += "if (";
         ifNode += expr.get("code") + ") {\n";
         ifNode += (String) c.getsList().accept(this);
@@ -523,14 +541,55 @@ public class CGenerator implements Visitor {
     public Object visit(PlusOP p) {
         Map<String, String> expr1= (Map<String, String>) p.getE().accept(this);
         Map<String, String> expr2= (Map<String, String>) p.getE1().accept(this);
-
+        String serviceInstrConcat = "";
         String structInstructions = "";
         if(expr1.containsKey("serviceInstr")) structInstructions += expr1.get("serviceInstr");
         if(expr2.containsKey("serviceInstr")) structInstructions += expr2.get("serviceInstr");
 
         Map<String, String> plusNode= new HashMap<String, String>();
-        plusNode.put("code", expr1.get("code") + " + " + expr2.get("code"));
+        String[] resType = null;
+        String[] resType2 = null;
+        if(p.getE().getRt().getKind() != null && p.getE().getRt().getKind().equals("method")) resType = this.getStringSplitted(p.getE().getRt().getType(),1);
+        if(p.getE1().getRt().getKind() != null && p.getE1().getRt().getKind().equals("method")) resType2 = this.getStringSplitted(p.getE1().getRt().getType(),1);
+
+        if(p.getE().getRt().getType().equals("string") || p.getE1().getRt().getType().equals("string")
+                || (p.getE().getRt().getKind().equals("method") && resType[0].equals("string"))
+                || (p.getE1().getRt().getKind().equals("method") && resType2[0].equals("string")) ){
+//
+//            String tempMethod=null;
+//            String tempMethod2=null;
+//
+//            if(p.getE().getRt().getKind().equals("method")){
+//                tempMethod = p.getE().getRt().getSymbol() +"_tempMethodConcat"+ this.indexConcatString;
+//                serviceInstrConcat += "char *"+ tempMethod +" = " + expr1.get("code")+";\n";
+//                this.indexConcatString++;
+//            }
+//            if(p.getE1().getRt().getKind().equals("method")){
+//                tempMethod2 = p.getE1().getRt().getSymbol() +"_tempMethodConcat"+ this.indexConcatString;
+//                serviceInstrConcat += "char *"+ tempMethod2 +" = " + expr2.get("code")+";\n";
+//                this.indexConcatString++;
+//            }
+            if(this.isFirstConcat){
+                String destConcat = "";
+                //if(tempMethod!=null)
+                destConcat = p.getE().getRt().getSymbol() + "_tempConcatVar" + this.indexConcatString;
+                serviceInstrConcat += "char "+ destConcat+ "[100];\n";
+                serviceInstrConcat += "strcpy(" + destConcat+ ", " + expr1.get("code") + ");\n";
+                serviceInstrConcat += "strcat(" + destConcat + ", " + expr2.get("code") +");\n";
+                plusNode.put("code", destConcat);
+                this.isFirstConcat=false;
+                this.indexConcatString++;
+            } else {
+                serviceInstrConcat += "strcat(" + expr1.get("code") + ", " + expr2.get("code") +");\n";
+                plusNode.put("code", expr1.get("code"));
+            }
+
+        } else plusNode.put("code", expr1.get("code") + " + " + expr2.get("code"));
+
         if( ! structInstructions.equals("")) plusNode.put("serviceInstr", structInstructions);
+        String serviceInstr = "";
+        if(plusNode.containsKey("serviceInstr")) serviceInstr = plusNode.get("serviceInstr");
+        if( ! serviceInstrConcat.equals("")) plusNode.put("serviceInstr", serviceInstr + serviceInstrConcat);
        // plusNode.add(null);
 
         return plusNode;
@@ -735,21 +794,28 @@ public class CGenerator implements Visitor {
     @Override
     public Object visit(WhileOP c) {
         String whileNode = "";
+        String statBeforeExpr="";
 
-        //TODO vedere uso di while
         if(c.getsList1() != null ) {
-            whileNode += (String) c.getsList1().accept(this);
+            statBeforeExpr = (String) c.getsList1().accept(this);
+            whileNode += statBeforeExpr;
+
         }
 
         Map<String, String> expr = (Map<String, String>) c.getE().accept(this);
 
-        if(expr.containsKey("serviceInstr")) whileNode += expr.get("serviceInstr");
+        if(expr.containsKey("serviceInstr")) {
+            whileNode += expr.get("serviceInstr");
+            this.isFirstConcat=true;
+        }
 
         whileNode += "while (";
         whileNode += expr.get("code");
         whileNode += ") {\n";
 
         whileNode += (String) c.getsList2().accept(this);
+        whileNode += statBeforeExpr;
+
         whileNode += "}\n";
 
         return whileNode;

@@ -1,7 +1,10 @@
-string nome := "Michele";
-float f := 5.5;
+/*
+ * Calcolo di moltiplicazione, somma e differenza
+*/
 
-proc multAddDiff ()int, int, int:
+string nome := "Michele";
+
+proc multAddDiff ()int, int, int :
 	int primo, secondo, mul, add, diff;
 
 	write("Inserire il primo argomento:\n");
@@ -12,19 +15,22 @@ proc multAddDiff ()int, int, int:
 	-> mul, add, diff
 corp;
 
-proc writeNewLines(int n) int:
-	while n > 0 do
+
+proc writeNewLines(int n)void :
+	while n >0 do
 		write("\n");
 		n := n -1;
 	od;
-	-> 3
+	->
 corp;
 
+
 proc main()void :
-	int a, b, c:= -2;
+	int a, b, c:=0;
 	a, b, c := multAddDiff();
 	write ("Ciao ", nome);
+	writeNewLines(2);
 	write("I tuoi valori sono:\n", a, " per la moltiplicazione\n", b,
 		" per la somma, e \n", c, " per la differenza");
-		->
+	->
 corp;
