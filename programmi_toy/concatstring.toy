@@ -25,6 +25,7 @@ write(s);
 corp;
 
 proc main() void:
+string strnull := null;
 string s,s1,h := rets();
 string t:= "ccc"+"fsf";
 write(h,t);
@@ -58,5 +59,8 @@ write(s, s1);
 
 write(readStrings());
 write("prova stringhe\t e ciao \n e \\ provaaaa  \" prova2 \r");
+
+write(strnull);
+
 ->
 corp;

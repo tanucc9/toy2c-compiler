@@ -20,6 +20,7 @@ In merito all compatibilità tra tipi è stato scelto di:
 
 Il main non deve contenere parametri e tipo di ritorno deve essere void (a differenza di C, non accetta int), ed infine non può essere invocato da altre funzioni.
 
+Il null viene visto come una stringa vuota ed è compatibile solo con string.
 
 *** GENERAZIONE DEL CODICE C ***
 

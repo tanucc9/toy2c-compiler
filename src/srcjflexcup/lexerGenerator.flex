@@ -1,10 +1,6 @@
 import java_cup.runtime.*;
 import java.util.ArrayList;
 
-
-/**
-* This class is a simple example lexer.
-*/
 %%
 %cup
 %unicode
