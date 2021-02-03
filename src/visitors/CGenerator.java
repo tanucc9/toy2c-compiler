@@ -99,7 +99,7 @@ public class CGenerator implements Visitor {
         }
 
         this.fileC += "\n" + structDecl + "\n" + procDecl + "\n" + procImpl;
-        System.out.println(this.fileC);
+        //System.out.println(this.fileC);
         return this.fileC;
     }
 
@@ -172,7 +172,10 @@ public class CGenerator implements Visitor {
         if(cp.getElist() != null ) {
             for(Expr e : cp.getElist()) {
                 Map<String, String> expr = (Map<String, String>) e.accept(this);
-                if(expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+                if(expr.containsKey("serviceInstr")) {
+                    structInstructions += expr.get("serviceInstr");
+                    this.isFirstConcat = true;
+                }
                 if(expr.containsKey("idProc")){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
@@ -553,8 +556,8 @@ public class CGenerator implements Visitor {
         if(p.getE1().getRt().getKind() != null && p.getE1().getRt().getKind().equals("method")) resType2 = this.getStringSplitted(p.getE1().getRt().getType(),1);
 
         if(p.getE().getRt().getType().equals("string") || p.getE1().getRt().getType().equals("string")
-                || (p.getE().getRt().getKind().equals("method") && resType[0].equals("string"))
-                || (p.getE1().getRt().getKind().equals("method") && resType2[0].equals("string")) ){
+                || (p.getE().getRt().getKind() != null && p.getE().getRt().getKind().equals("method") && resType[0].equals("string"))
+                || (p.getE1().getRt().getKind() != null && p.getE1().getRt().getKind().equals("method") && resType2[0].equals("string")) ){
 //
 //            String tempMethod=null;
 //            String tempMethod2=null;
@@ -611,7 +614,10 @@ public class CGenerator implements Visitor {
             String structInstructions = "";
             for(Expr e : pb.getRe()) {
                 Map<String, String> expr =(Map<String, String>) e.accept(this);
-                if (expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+                if (expr.containsKey("serviceInstr")) {
+                    structInstructions += expr.get("serviceInstr");
+                    this.isFirstConcat = true;
+                }
                 if(expr.containsKey("idProc")){
                     StructC structC=null;
                     for(StructC sc: this.structMethod){
@@ -834,7 +840,10 @@ public class CGenerator implements Visitor {
             if (e instanceof StringConst) {
                 stringNodes.add(expr.get("code"));
             } else {
-                if(expr.containsKey("serviceInstr")) structInstructions += expr.get("serviceInstr");
+                if(expr.containsKey("serviceInstr")) {
+                    structInstructions += expr.get("serviceInstr");
+                    this.isFirstConcat = true;
+                }
                 if (expr.containsKey("idProc")) {
 
                     StructC structC = null;
@@ -874,11 +883,13 @@ public class CGenerator implements Visitor {
             * fine della printf (es. printf("ciao ");) <- Questo errore è evitato */
             boolean isLast = false;
             if ( stringNodes.indexOf(s) == stringNodes.size()-1 ) isLast = true;
-
+                s = s.replace("\"", "");
+            /* Spostato nel nodo StringConst
             s = s.replace("\n", "\\n");
             s = s.replace("\t", "\\t");
             s = s.replace("\r", "\\r");
             s = s.replace("\"", "");
+            */
 
             if (isLast) writeOp += s;
             else writeOp += s + " ";
@@ -898,6 +909,12 @@ public class CGenerator implements Visitor {
     @Override
     public Object visit(StringConst sc) {
         Map<String, String> stringConstNode= new HashMap<String, String>();
+
+        sc.setS(sc.getS().replace("\n", "\\n"));
+        sc.setS(sc.getS().replace("\t", "\\t"));
+        sc.setS(sc.getS().replace("\r", "\\r"));
+        sc.setS(sc.getS().replace("\"", ""));
+
         stringConstNode.put("code", "\"" + sc.getS() + "\"");
         //stringConstNode.add(null);
 

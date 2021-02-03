@@ -7,7 +7,7 @@ ELSE, WHILE, DO, OD, READ, WRITE, ASSIGN, PLUS, MINUS, TIMES, DIV, EQ, NE, LT, L
 OR, NOT, NULL, UMINUS, RETURN;
 
 terminal String ID, STRING_CONST, INT_CONST, FLOAT_CONST;
-terminal boolean TRUE, FALSE; //TODO da vedere boolean
+terminal boolean TRUE, FALSE;
 
 /* Non terminals */
 nonterminal Expr Expr;

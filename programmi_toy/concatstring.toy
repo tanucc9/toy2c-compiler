@@ -2,12 +2,22 @@ string g := "dd";
 string j := "ecco" + " qua";
 string y := j + " qua";
 
+proc concatStrings(string s, s1) string, string:
+
+-> s , s1
+corp;
+
 proc rets() string:
 ->"ciaooooooooo"
 corp;
 
+proc getString(string s) void:
+write(s);
+->
+corp;
+
 proc main() void:
-string s,h := rets();
+string s,s1,h := rets();
 string t:= "ccc"+"fsf";
 write(h,t);
 s:=rets()+"fdsfsfw";
@@ -30,5 +40,13 @@ elif "boh" + rets()  < "tr" then write("minore2 \n");
 fi;
 
 /* while "AA" < "BB" + "ZZ" do write("nooooooooooo"); od; */
+
+write("ciao " + "sto " + "concatenando " + rets() + " holaaa\n");
+
+getString(rets() + " prova " + t);
+
+s, s1 := concatStrings("ciao", "bello");
+write(s, s1);
+
 ->
 corp;
