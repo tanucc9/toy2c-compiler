@@ -30,7 +30,7 @@ public class Tester {
         //p.debug_parse();
         ProgramOP pOP= (ProgramOP) p.parse().value;
 
-
+        /*
         //Generazione ast in xml
         GenerateXML xml = new GenerateXML();
         Document xml_generated = (Document)pOP.accept(xml);
@@ -41,7 +41,7 @@ public class Tester {
         DOMSource domSource = new DOMSource(xml_generated);
         StreamResult streamResult = new StreamResult(new File(System.getProperty("user.dir")+"\\albero_sintattico.xml"));
         transformer.transform(domSource, streamResult);
-
+        */
 
         //Analisi semantica e ast esteso
         SemanticAnalisys sa = new SemanticAnalisys();

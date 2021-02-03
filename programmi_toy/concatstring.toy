@@ -2,9 +2,17 @@ string g := "dd";
 string j := "ecco" + " qua";
 string y := j + " qua";
 
+proc readStrings() string:
+    string input;
+    write("Scrivi una stringa: \n");
+    readln(input);
+
+-> input + " fine!\n"
+corp;
+
 proc concatStrings(string s, s1) string, string:
 
--> s , s1
+-> "\n" + s + s1 , s1 + s + "finished!\n"
 corp;
 
 proc rets() string:
@@ -47,6 +55,8 @@ getString(rets() + " prova " + t);
 
 s, s1 := concatStrings("ciao", "bello");
 write(s, s1);
+
+write(readStrings());
 
 ->
 corp;

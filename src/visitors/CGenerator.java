@@ -22,7 +22,6 @@ public class CGenerator implements Visitor {
     private int indexAssignStruct;
     private int indexResultStruct;
     private int indexConcatString;
-    private int indexMethodConcatString;
     private int indexParamCallProcStruct;
     private boolean isFirstConcat;
     private ArrayList<String> fileSplitted;
@@ -30,6 +29,7 @@ public class CGenerator implements Visitor {
     private ProcOP currentProc;
     private boolean isGlobalVar;
     private int countElifOP;
+    private String globalTempCharVar;
 
     public CGenerator () {
         this.typeEnvironment = new ArrayList<ArrayList<RowTable>>();
@@ -44,13 +44,13 @@ public class CGenerator implements Visitor {
         indexResultStruct=0;
         this.indexConcatString=0;
         this.indexParamCallProcStruct = 0;
-        this.indexMethodConcatString=0;
         fileSplitted = new ArrayList<String>();
         structMethod= new ArrayList<StructC>();
         this.currentProc = new ProcOP();
         this.isGlobalVar = false;
         this.globalAssignVar = "";
         this.countElifOP = 0;
+        this.globalTempCharVar = "";
     }
 
     private String[] getStringSplitted(String type, int index){
@@ -98,7 +98,7 @@ public class CGenerator implements Visitor {
             this.procImpl += "\n" + (String) var.accept(this);
         }
 
-        this.fileC += "\n" + structDecl + "\n" + procDecl + "\n" + procImpl;
+        this.fileC += "\n" + structDecl + "\n" + this.globalTempCharVar + "\n" + procDecl + "\n" + procImpl;
         //System.out.println(this.fileC);
         return this.fileC;
     }
@@ -558,25 +558,11 @@ public class CGenerator implements Visitor {
         if(p.getE().getRt().getType().equals("string") || p.getE1().getRt().getType().equals("string")
                 || (p.getE().getRt().getKind() != null && p.getE().getRt().getKind().equals("method") && resType[0].equals("string"))
                 || (p.getE1().getRt().getKind() != null && p.getE1().getRt().getKind().equals("method") && resType2[0].equals("string")) ){
-//
-//            String tempMethod=null;
-//            String tempMethod2=null;
-//
-//            if(p.getE().getRt().getKind().equals("method")){
-//                tempMethod = p.getE().getRt().getSymbol() +"_tempMethodConcat"+ this.indexConcatString;
-//                serviceInstrConcat += "char *"+ tempMethod +" = " + expr1.get("code")+";\n";
-//                this.indexConcatString++;
-//            }
-//            if(p.getE1().getRt().getKind().equals("method")){
-//                tempMethod2 = p.getE1().getRt().getSymbol() +"_tempMethodConcat"+ this.indexConcatString;
-//                serviceInstrConcat += "char *"+ tempMethod2 +" = " + expr2.get("code")+";\n";
-//                this.indexConcatString++;
-//            }
+
             if(this.isFirstConcat){
                 String destConcat = "";
-                //if(tempMethod!=null)
                 destConcat = p.getE().getRt().getSymbol() + "_tempConcatVar" + this.indexConcatString;
-                serviceInstrConcat += "char "+ destConcat+ "[100];\n";
+                this.globalTempCharVar += "char "+ destConcat+ "[100];\n";
                 serviceInstrConcat += "strcpy(" + destConcat+ ", " + expr1.get("code") + ");\n";
                 serviceInstrConcat += "strcat(" + destConcat + ", " + expr2.get("code") +");\n";
                 plusNode.put("code", destConcat);
@@ -716,14 +702,13 @@ public class CGenerator implements Visitor {
     @Override
     public Object visit(ReadOP c) {
         String idlist ="";
-        String charInstrBefore = "";
         String charInstrAfter = "";
         String readNode = "";
 
         for(Id i:c.getIdList()){
             readNode += "scanf(\"" + this.getTypeInWR(i.getRt().getType(), "read");
             if(i.getRt().getType().equals("string")) {
-                charInstrBefore += "char " + i.getId() +"_tempVarReadString[100];\n";
+                this.globalTempCharVar += "char " + i.getId() +"_tempVarReadString[100];\n";
                 idlist = ", " + i.getId() + "_tempVarReadString";
                 charInstrAfter += i.getId() + " = " + i.getId() + "_tempVarReadString;\n";
             } else idlist = ", &" + i.getId();
@@ -731,7 +716,7 @@ public class CGenerator implements Visitor {
             readNode += ");\n";
         }
 
-        readNode = charInstrBefore + readNode + charInstrAfter;
+        readNode = readNode + charInstrAfter;
 
         return readNode;
     }
