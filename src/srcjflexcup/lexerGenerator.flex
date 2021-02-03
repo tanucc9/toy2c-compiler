@@ -1,4 +1,3 @@
-/* JFlex example: part of Java language lexer specification */
 import java_cup.runtime.*;
 import java.util.ArrayList;
 
@@ -33,10 +32,6 @@ import java.util.ArrayList;
               //return new Symbol(type, SymbolTable.indexOf(value.toString()));
               return new Symbol(type, value.toString());
       }
-      /*
-      private Symbol generateError(String value) throws Exception {
-      }
-      */
 
 
 %}

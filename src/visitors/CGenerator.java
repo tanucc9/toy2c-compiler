@@ -99,6 +99,7 @@ public class CGenerator implements Visitor {
         }
 
         this.fileC += "\n" + structDecl + "\n" + this.globalTempCharVar + "\n" + procDecl + "\n" + procImpl;
+        this.fileC = this.fileC.replace("%apici%", "\\\"");
         //System.out.println(this.fileC);
         return this.fileC;
     }
@@ -898,7 +899,7 @@ public class CGenerator implements Visitor {
         sc.setS(sc.getS().replace("\n", "\\n"));
         sc.setS(sc.getS().replace("\t", "\\t"));
         sc.setS(sc.getS().replace("\r", "\\r"));
-        sc.setS(sc.getS().replace("\"", ""));
+        sc.setS(sc.getS().replace("\"", "%apici%"));
 
         stringConstNode.put("code", "\"" + sc.getS() + "\"");
         //stringConstNode.add(null);

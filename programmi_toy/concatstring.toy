@@ -57,6 +57,6 @@ s, s1 := concatStrings("ciao", "bello");
 write(s, s1);
 
 write(readStrings());
-
+write("prova stringhe\t e ciao \n e \\ provaaaa  \" prova2 \r");
 ->
 corp;
