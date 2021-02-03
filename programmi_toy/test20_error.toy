@@ -6,6 +6,6 @@ proc x2() bool:
 corp;
 
 proc main() void:
-if x() && x2() then write("telefonino"); fi;
+if x() && x2() then write("yooooo"); fi;
 ->
 corp;
