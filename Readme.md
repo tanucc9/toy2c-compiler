@@ -43,13 +43,13 @@ Per il tipo bool abbiamo importato la libreria <stdbool.h>
 
 # Altre info
 
-## Generazione C 
+### Generazione C 
 EXPR
 'code'-> codiceC
 'idProc' -> idfunzione se è callproc
 'serviceInstr' -> istruzioni di servizio per le struct o per la concatenazione tra stringhe
 
-## Analisi semantica
+### Analisi semantica
 vardeclop -> idlistinitop può avere o non l'expr quindi il rowtable che ritorna idlistinit a vardeclop avrà il gettype settato SE expr è presente, altrimenti null
 
 EXPR
@@ -60,7 +60,7 @@ idlistinit ritorna un rowtable che contiene type = null SE Expr non è presente 
 conterrà il tipo di expr
 
 
-## Generazione AST in XML
+### Generazione AST in XML
 
 Per la generazione dell'xml abbiamo utilizzato una libreria dove in ogni nodo si crea un oggetto contenente l'xml del nodo.
 In generale si fa l'accept sui nodi e il suo valore diventa la foglia del nodo padre.
