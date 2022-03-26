@@ -1,9 +1,8 @@
-# COME USARE IL COMPILATORE
+# Come usare il compilatore
 Tramite terminale utilizzare il toy2c.bat per la compilazione del programma toy.
-Per conoscere la sintassi del toy2c.bat è possibile lanciare il comando: toy2c.bat --help
-E' obbligatorio specificare il path del file toy da compilare.
+Per conoscere la sintassi del toy2c.bat è possibile lanciare il comando: toy2c.bat --help. È obbligatorio specificare il path del file toy da compilare.
 
-# ANALISI SEMANTICA
+# Analisi semantica
 La maggior parte dei nodi ritorna un Rowtable, ovvero un oggetto contenente symbol, type e kind.
 Prima di ritornare il Rowtable, leghiamo quest'ultimo al nodo sull'albero in modo da averlo nelle fasi successive del compilatore.
 
@@ -22,7 +21,7 @@ Il main non deve contenere parametri e tipo di ritorno deve essere void (a diffe
 
 Il null viene visto come una stringa vuota ed è compatibile solo con string.
 
-# GENERAZIONE DEL CODICE C
+# Generazione codice C
 
 Le librerie che importiamo sono: #include <stdio.h> , #include <stdbool.h> , #include <string.h> \n\n";
 
@@ -42,15 +41,15 @@ Le stringhe sono state gestite come char *, e in alcuni casi abbiamo utilizzato 
 Per il tipo bool abbiamo importato la libreria <stdbool.h>
 
 
-# ALTRE INFO
+# Altre info
 
-## GENERAZIONE C 
+## Generazione C 
 EXPR
 'code'-> codiceC
 'idProc' -> idfunzione se è callproc
 'serviceInstr' -> istruzioni di servizio per le struct o per la concatenazione tra stringhe
 
-## ANALISI SEMANTICA
+## Analisi semantica
 vardeclop -> idlistinitop può avere o non l'expr quindi il rowtable che ritorna idlistinit a vardeclop avrà il gettype settato SE expr è presente, altrimenti null
 
 EXPR
@@ -61,7 +60,7 @@ idlistinit ritorna un rowtable che contiene type = null SE Expr non è presente 
 conterrà il tipo di expr
 
 
-## GENERAZIONE AST IN XML
+## Generazione AST in XML
 
 Per la generazione dell'xml abbiamo utilizzato una libreria dove in ogni nodo si crea un oggetto contenente l'xml del nodo.
 In generale si fa l'accept sui nodi e il suo valore diventa la foglia del nodo padre.
